@@ -134,8 +134,8 @@
     position: fixed;
     left: 0;
     right: 0;
-    bottom: max(20px, env(safe-area-inset-bottom));
-    height: 126px;
+    bottom: max(4px, env(safe-area-inset-bottom));
+    height: 96px;
     z-index: 100;
     pointer-events: none;
     --dial-offset: 0px;
@@ -146,7 +146,7 @@
   #selected-date-display {
     position: absolute;
     left: 50%;
-    bottom: 2px;
+    bottom: 0;
     width: min(300px, 82vw);
     transform: translateX(-50%);
     display: flex;
@@ -162,7 +162,7 @@
   }
   #selected-date-value {
     font-family: 'DM Mono', monospace;
-    font-size: 26px;
+    font-size: 18px;
     font-weight: 300;
     line-height: 1;
     letter-spacing: 0.03em;
@@ -175,8 +175,8 @@
     position: absolute;
     left: 0;
     right: 0;
-    top: 0;
-    height: 78px;
+    top: 8px;
+    height: 56px;
     overflow: hidden;
     pointer-events: auto;
     touch-action: none;
@@ -186,7 +186,7 @@
     position: absolute;
     left: 0;
     right: 0;
-    top: 38px;
+    top: 34px;
     height: 1px;
     background: linear-gradient(90deg,
       rgba(255,255,255,0),
@@ -201,9 +201,9 @@
     content: '';
     position: absolute;
     left: 50%;
-    top: 14px;
+    top: 19px;
     width: var(--dial-width);
-    height: 50px;
+    height: 30px;
     transform: translateX(calc(-50% + var(--dial-offset)));
     background: repeating-linear-gradient(
       to right,
@@ -217,9 +217,9 @@
   #timeline-marker {
     position: absolute;
     left: 50%;
-    top: 5px;
+    top: 13px;
     width: 3px;
-    height: 70px;
+    height: 42px;
     transform: translateX(-50%);
     background: rgba(255,255,255,0.96);
     border-radius: 2px;
@@ -230,7 +230,7 @@
     content: '';
     position: absolute;
     left: 50%;
-    top: 31px;
+    top: 21px;
     width: 11px;
     height: 11px;
     transform: translate(-50%, -50%);
@@ -244,21 +244,22 @@
     width: 100%;
     -webkit-appearance: none;
     appearance: none;
-    height: 78px;
+    height: 56px;
     background: transparent;
     outline: none;
     cursor: pointer;
     opacity: 0;
+    pointer-events: none;
   }
   #dateSlider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 44px; height: 78px;
+    width: 44px; height: 56px;
     border-radius: 0;
     background: #fff;
     cursor: pointer;
   }
   #dateSlider::-moz-range-thumb {
-    width: 44px; height: 78px;
+    width: 44px; height: 56px;
     border: 0;
     border-radius: 0;
     background: #fff;
@@ -274,10 +275,10 @@
     #banding-name { font-size: 18px; }
     #banding-number { font-size: 40px; }
     #aqi-panel {
-      bottom: max(18px, env(safe-area-inset-bottom));
-      height: 124px;
+      bottom: max(4px, env(safe-area-inset-bottom));
+      height: 96px;
     }
-    #selected-date-value { font-size: 25px; }
+    #selected-date-value { font-size: 18px; }
   }
 
 </style>
@@ -370,7 +371,7 @@ const orbit = {
   theta: 0, phi: Math.PI / 2.5, radius: 3,
   dragging: false, panning: false,
   last: { x: 0, y: 0 },
-  target: new THREE.Vector3(0, 0.3, 0),
+  target: new THREE.Vector3(0, 0.22, 0),
 };
 let lastInteractionTime = performance.now();
 let thetaVelocity = 0;
@@ -1370,11 +1371,7 @@ function createSphereParticles() {
   return { mesh, update };
 }
 // ── 메인 ─────────────────────────────────────────────────
-const ASSET_BASE = 'https://pub-69ed5536056046b686d3e07c38041470.r2.dev';
-
-const PLY_FILE = `${ASSET_BASE}/tree_scan2.ply`;
-const LEAVES_FILE = `${ASSET_BASE}/leaves_only1.ply`;
-const UNTITLED_SCAN_FILE = `${ASSET_BASE}/untitled_scan.ply`;
+const PLY_FILE = 'tree_scan2.ply';
 
 const loadingEl   = document.getElementById('loading');
 const loadingBar  = document.getElementById('loading-bar');
@@ -1438,7 +1435,8 @@ function setSelectedDate(index) {
 }
 
 function updateDateText(record, index) {
-  selectedDateValue.textContent = formatDateKey(record.dateKey);
+  const todayIndex = airQualityDays.length - 1;
+  selectedDateValue.textContent = index === todayIndex ? 'Today' : formatDateKey(record.dateKey, false);
 }
 
 dateSlider.addEventListener('input', () => {
@@ -1452,20 +1450,24 @@ function setDateFromTimelineX(clientX) {
   const pad = Math.min(76, rect.width * 0.16);
   const usableWidth = Math.max(1, rect.width - pad * 2);
   const t = clamp((clientX - rect.left - pad) / usableWidth, 0, 1);
-  const index = Math.round(t * (airQualityDays.length - 1));
+  const maxIndex = airQualityDays.length - 1;
+  const index = maxIndex - Math.round(t * maxIndex);
   markInteraction();
   setSelectedDate(index);
 }
 sliderWrap.addEventListener('pointerdown', e => {
+  e.preventDefault();
   timelineDragging = true;
   sliderWrap.setPointerCapture?.(e.pointerId);
   setDateFromTimelineX(e.clientX);
 });
 sliderWrap.addEventListener('pointermove', e => {
   if (!timelineDragging) return;
+  e.preventDefault();
   setDateFromTimelineX(e.clientX);
 });
 sliderWrap.addEventListener('pointerup', e => {
+  e.preventDefault();
   timelineDragging = false;
   sliderWrap.releasePointerCapture?.(e.pointerId);
 });
@@ -1542,7 +1544,7 @@ async function init() {
 
     // ── 이파리 PLY 별도 로드 ──
     try {
-      const leavesBuffer = await loadPLY(LEAVES_FILE, () => {});
+      const leavesBuffer = await loadPLY('leaves_only1.ply', () => {});
       const leavesHeader = parsePLYHeader(leavesBuffer);
       const { positions: lPos, colors: lCol, sizes: lSiz, opacities: lOpa } = buildSplatGeometry(leavesBuffer, leavesHeader);
 
@@ -1841,15 +1843,16 @@ function shiftDateKey(dateKey, delta) {
   return date.toISOString().slice(0, 10);
 }
 
-function formatDateKey(dateKey) {
+function formatDateKey(dateKey, includeYear = true) {
   const [year, month, day] = dateKey.split('-').map(Number);
   const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-  return date.toLocaleDateString('en-GB', {
+  const options = {
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
     timeZone: 'UTC',
-  });
+  };
+  if (includeYear) options.year = 'numeric';
+  return date.toLocaleDateString('en-GB', options);
 }
 
 function isValidNumber(value) {
