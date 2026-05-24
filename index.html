@@ -1371,7 +1371,11 @@ function createSphereParticles() {
   return { mesh, update };
 }
 // ── 메인 ─────────────────────────────────────────────────
-const PLY_FILE = 'tree_scan2.ply';
+const ASSET_BASE = 'https://pub-69ed5536056046b686d3e07c38041470.r2.dev';
+
+const PLY_FILE = `${ASSET_BASE}/tree_scan2.ply`;
+const LEAVES_FILE = `${ASSET_BASE}/leaves_only1.ply`;
+const UNTITLED_SCAN_FILE = `${ASSET_BASE}/untitled_scan.ply`;
 
 const loadingEl   = document.getElementById('loading');
 const loadingBar  = document.getElementById('loading-bar');
@@ -1544,7 +1548,7 @@ async function init() {
 
     // ── 이파리 PLY 별도 로드 ──
     try {
-      const leavesBuffer = await loadPLY('leaves_only1.ply', () => {});
+      const leavesBuffer = await loadPLY(LEAVES_FILE, () => {});
       const leavesHeader = parsePLYHeader(leavesBuffer);
       const { positions: lPos, colors: lCol, sizes: lSiz, opacities: lOpa } = buildSplatGeometry(leavesBuffer, leavesHeader);
 
