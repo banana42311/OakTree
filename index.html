@@ -1371,11 +1371,13 @@ function createSphereParticles() {
   return { mesh, update };
 }
 // ── 메인 ─────────────────────────────────────────────────
-const ASSET_BASE = 'https://pub-69ed5536056046b686d3e07c38041470.r2.dev';
+const IS_LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+const ASSET_BASE = IS_LOCAL
+  ? '.'
+  : 'https://pub-69ed5536056046b686d3e07c38041470.r2.dev';
 
 const PLY_FILE = `${ASSET_BASE}/tree_scan2.ply`;
 const LEAVES_FILE = `${ASSET_BASE}/leaves_only1.ply`;
-const UNTITLED_SCAN_FILE = `${ASSET_BASE}/untitled_scan.ply`;
 
 const loadingEl   = document.getElementById('loading');
 const loadingBar  = document.getElementById('loading-bar');
@@ -1685,7 +1687,7 @@ async function init() {
       scene.add(leavesPoints);
       console.log('이파리 로드 완료');
     } catch(e) {
-      console.log('leaves_only1.ply 없음, 스킵:', e.message);
+      console.log('leaves 파일 없음, 스킵:', e.message);
     }
 
     // 브랜치 대표점 계산 → 셰이더 uniform에 설정
@@ -1817,6 +1819,29 @@ function animate() {
 let globalPM25AQI = 1;
 let globalPM10AQI = 1;
 
+// ── 날짜 유틸 ─────────────────────────────────────────────
+function getLondonDateKey(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/London',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date);
+  const byType = Object.fromEntries(parts.map(p => [p.type, p.value]));
+  return `${byType.year}-${byType.month}-${byType.day}`;
+}
+function shiftDateKey(dateKey, delta) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + delta, 12, 0, 0));
+  return date.toISOString().slice(0, 10);
+}
+function formatDateKey(dateKey, includeYear = true) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  const options = { day: 'numeric', month: 'long', timeZone: 'UTC' };
+  if (includeYear) options.year = 'numeric';
+  return date.toLocaleDateString('en-GB', options);
+}
+
+// ── DAQI 변환 ─────────────────────────────────────────────
 function pm25ToDAQI(v) {
   if (v <= 11) return 1; if (v <= 23) return 2; if (v <= 35) return 3;
   if (v <= 41) return 4; if (v <= 47) return 5; if (v <= 53) return 6;
@@ -1830,106 +1855,129 @@ function pm10ToDAQI(v) {
   return 10;
 }
 
-function getLondonDateKey(date = new Date()) {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/London',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(date);
-  const byType = Object.fromEntries(parts.map(part => [part.type, part.value]));
-  return `${byType.year}-${byType.month}-${byType.day}`;
-}
-
-function shiftDateKey(dateKey, delta) {
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day + delta, 12, 0, 0));
-  return date.toISOString().slice(0, 10);
-}
-
-function formatDateKey(dateKey, includeYear = true) {
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-  const options = {
-    day: 'numeric',
-    month: 'long',
-    timeZone: 'UTC',
-  };
-  if (includeYear) options.year = 'numeric';
-  return date.toLocaleDateString('en-GB', options);
-}
-
-function isValidNumber(value) {
-  return typeof value === 'number' && Number.isFinite(value);
-}
-
-function averageHourlyForDate(data, dateKey) {
+// ── Open-Meteo: 14일 히스토리 베이스 ──────────────────────
+function getHourlyValue(data, dateKey, todayOnly) {
   const times = data.hourly?.time || [];
-  const pm25Values = data.hourly?.pm2_5 || [];
-  const pm10Values = data.hourly?.pm10 || [];
-  let pm25Sum = 0;
-  let pm10Sum = 0;
-  let count = 0;
-
+  const pm25v  = data.hourly?.pm2_5 || [];
+  const pm10v  = data.hourly?.pm10  || [];
+  if (todayOnly) {
+    // 현재 시각에 가장 가까운 과거 시간값 한 개
+    const nowHour = new Date().toISOString().slice(0, 13);
+    let best = -1;
+    for (let i = 0; i < times.length; i++) {
+      if (!times[i].startsWith(dateKey)) continue;
+      if (times[i].slice(0, 13) <= nowHour) best = i;
+    }
+    if (best < 0) return null;
+    const p25 = pm25v[best], p10 = pm10v[best];
+    if (!Number.isFinite(p25) || !Number.isFinite(p10)) return null;
+    return { pm25: p25, pm10: p10, count: 1 };
+  }
+  // 과거 날짜: 그날 중 가장 나쁜 시간값 (최대 DAQI 기준)
+  let worstPM25 = 0, worstPM10 = 0, worstDAQI = 0, n = 0;
   for (let i = 0; i < times.length; i++) {
     if (!times[i].startsWith(dateKey)) continue;
-    const pm25 = pm25Values[i];
-    const pm10 = pm10Values[i];
-    if (!isValidNumber(pm25) || !isValidNumber(pm10)) continue;
-    pm25Sum += pm25;
-    pm10Sum += pm10;
-    count += 1;
+    if (!Number.isFinite(pm25v[i]) || !Number.isFinite(pm10v[i])) continue;
+    const daqi = Math.max(pm25ToDAQI(pm25v[i]), pm10ToDAQI(pm10v[i]));
+    if (daqi > worstDAQI) {
+      worstDAQI = daqi;
+      worstPM25 = pm25v[i];
+      worstPM10 = pm10v[i];
+    }
+    n++;
+  }
+  return n ? { pm25: worstPM25, pm10: worstPM10, count: n } : null;
+}
+
+async function fetchOpenMeteo() {
+  const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=51.4569&longitude=-0.0160&hourly=pm2_5,pm10&past_days=13&forecast_days=1&timezone=Europe%2FLondon';
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
+  return res.json();
+}
+
+// ── LAQN: 오늘 실시간 DAQI (Hourly 엔드포인트, 날짜 파라미터 없음) ──
+async function fetchLAQNHourlyToday(dateKey) {
+  const url = 'https://api.erg.ic.ac.uk/AirQuality/Hourly/MonitoringIndex/GroupName=London/Json';
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`LAQN Hourly HTTP ${res.status}`);
+  const data = await res.json();
+
+  const authorities = data?.HourlyAirQualityIndex?.LocalAuthority;
+  if (!authorities) {
+    console.warn('[LAQN] 응답 구조 예상과 다름:', JSON.stringify(data).slice(0, 200));
+    return null;
   }
 
-  if (!count) return null;
-  return {
-    time: dateKey,
-    pm25: pm25Sum / count,
-    pm10: pm10Sum / count,
-    count,
-  };
+  const authArr = Array.isArray(authorities) ? authorities : [authorities];
+  console.log('[LAQN] 응답 구 목록:', authArr.map(a => a['@LocalAuthorityName']).join(', '));
+
+  const lewisham = authArr.find(a =>
+    a['@LocalAuthorityName']?.toLowerCase().includes('lewisham')
+  );
+  if (!lewisham) return null;
+
+  const sites = lewisham.Site;
+  if (!sites) return null;
+  const siteArr = Array.isArray(sites) ? sites : [sites];
+
+  let aqi = 0, pm25 = 0, pm10 = 0;
+  for (const s of siteArr) {
+    const i = parseInt(s['@AirQualityIndex']) || 0;
+    if (i > aqi) aqi = i;
+    const sp = s.Species;
+    if (sp) {
+      for (const x of (Array.isArray(sp) ? sp : [sp])) {
+        const c = x['@SpeciesCode']?.toUpperCase();
+        const v = parseInt(x['@AirQualityIndex']) || 0;
+        if (c === 'PM25' && v > pm25) pm25 = v;
+        if (c === 'PM10' && v > pm10) pm10 = v;
+      }
+    }
+  }
+  if (!aqi) return null;
+  console.log(`[LAQN] Lewisham DAQI: ${aqi} (PM2.5:${pm25||aqi} PM10:${pm10||aqi})`);
+  return { dateKey, aqi, pm25AQI: pm25||aqi, pm10AQI: pm10||aqi, unavailable: false, sampleCount: siteArr.length };
 }
 
-function buildAirQualityRecord(dateKey, pm25, pm10, sourceTime, unavailable = false, sampleCount = 0) {
-  const pm25AQI = unavailable ? 1 : pm25ToDAQI(pm25);
-  const pm10AQI = unavailable ? 1 : pm10ToDAQI(pm10);
-  return {
-    dateKey,
-    sourceTime,
-    pm25,
-    pm10,
-    pm25AQI,
-    pm10AQI,
-    aqi: Math.max(pm25AQI, pm10AQI),
-    unavailable,
-    sampleCount,
-  };
+// ── 타임라인 조립 ─────────────────────────────────────────
+function buildFallbackRecord(dateKey) {
+  return { dateKey, aqi: 1, pm25AQI: 1, pm10AQI: 1, unavailable: true, sampleCount: 0 };
 }
-
 function buildFallbackTimeline() {
-  const todayKey = getLondonDateKey();
-  return Array.from({ length: 14 }, (_, index) => {
-    const dateKey = shiftDateKey(todayKey, index - 13);
-    return buildAirQualityRecord(dateKey, 0, 0, null, true);
-  });
+  const today = getLondonDateKey();
+  return Array.from({ length: 14 }, (_, i) => buildFallbackRecord(shiftDateKey(today, i - 13)));
 }
 
 async function fetchAirQualityTimeline() {
-  const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=51.4569&longitude=-0.0160&hourly=pm2_5,pm10&past_days=13&forecast_days=1&timezone=Europe%2FLondon';
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Air quality request failed: ${response.status}`);
-  const data = await response.json();
-
   const todayKey = getLondonDateKey();
-  const dates = Array.from({ length: 14 }, (_, index) => shiftDateKey(todayKey, index - 13));
+  const dates = Array.from({ length: 14 }, (_, i) => shiftDateKey(todayKey, i - 13));
 
-  return dates.map(dateKey => {
-    const daily = averageHourlyForDate(data, dateKey);
-    if (daily) {
-      return buildAirQualityRecord(dateKey, daily.pm25, daily.pm10, daily.time, false, daily.count);
+  // Open-Meteo (히스토리) + LAQN Hourly (오늘 실측) 병렬 요청
+  const [omResult, laqnResult] = await Promise.allSettled([
+    fetchOpenMeteo(),
+    fetchLAQNHourlyToday(todayKey),
+  ]);
+
+  const omData    = omResult.status    === 'fulfilled' ? omResult.value    : null;
+  const todayLAQN = laqnResult.status  === 'fulfilled' ? laqnResult.value  : null;
+
+  if (!omData)    console.warn('[Open-Meteo] 실패:', omResult.reason?.message);
+  if (!todayLAQN) console.warn('[LAQN] 오늘 실측 없음, Open-Meteo 현재 시각값 사용');
+
+  return dates.map((dateKey, i) => {
+    const isToday = i === dates.length - 1;
+
+    if (isToday && todayLAQN) return todayLAQN;
+
+    if (omData) {
+      const h = getHourlyValue(omData, dateKey, isToday);
+      if (h) {
+        const p25 = pm25ToDAQI(h.pm25), p10 = pm10ToDAQI(h.pm10);
+        return { dateKey, aqi: Math.max(p25, p10), pm25AQI: p25, pm10AQI: p10, unavailable: false, sampleCount: h.count };
+      }
     }
-
-    return buildAirQualityRecord(dateKey, 0, 0, null, true);
+    return buildFallbackRecord(dateKey);
   });
 }
 
@@ -1945,19 +1993,17 @@ async function startApp() {
   dateSlider.value = dateSlider.max;
   setSelectedDate(airQualityDays.length - 1);
 
-  const todayRecord = airQualityDays[airQualityDays.length - 1];
-  console.log(`Selected date: ${todayRecord.dateKey}, source: daily average (${todayRecord.sampleCount || 0} hourly samples)`);
-  console.log(`PM2.5 daily avg: ${todayRecord.pm25} µg/m³ → DAQI: ${todayRecord.pm25AQI}`);
-  console.log(`PM10 daily avg:  ${todayRecord.pm10} µg/m³ → DAQI: ${todayRecord.pm10AQI}`);
-  console.log(`Air Pollution banding: ${todayRecord.aqi}`);
+  const r = airQualityDays[airQualityDays.length - 1];
+  console.log(`오늘 (${r.dateKey}) DAQI:${r.aqi} PM2.5:${r.pm25AQI} PM10:${r.pm10AQI} unavailable:${r.unavailable}`);
 
-  currentStyle = getAQIStyle(todayRecord.aqi);
-  targetStyle = { ...currentStyle };
+  currentStyle = getAQIStyle(r.aqi);
+  targetStyle  = { ...currentStyle };
   init();
 }
 
 // 브라우저가 열리면 startApp 실행
 window.addEventListener('load', startApp);
+
 
 </script>
 </body>
