@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Tree Breathing — Air Quality Visualization</title>
+<title>나무의 호흡 — 공기질 시각화</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Noto+Sans+KR:wght@300;400&display=swap');
 
@@ -124,74 +124,9 @@
     color: var(--band-color);
   }
   #banding-number {
-    font-size: 36px;
+    font-size: 42px;
     letter-spacing: 0;
-    color: rgba(190,192,186,0.84);
-  }
-  #scenario-control {
-    position: fixed;
-    top: max(24px, env(safe-area-inset-top));
-    right: 24px;
-    z-index: 110;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 7px;
-  }
-  #scenario-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.18em;
-    color: rgba(255,255,255,0.35);
-    text-transform: uppercase;
-    text-shadow: 0 2px 18px rgba(0,0,0,0.85);
-    white-space: nowrap;
-  }
-  #scenario-toggle {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    height: 32px;
-    padding: 0 7px 0 11px;
-    border: 0;
-    border-radius: 999px;
-    background: rgba(0,0,0,0.22);
-    color: rgba(255,255,255,0.50);
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16), 0 8px 22px rgba(0,0,0,0.22);
-    cursor: pointer;
-    touch-action: manipulation;
-  }
-  #scenario-switch {
-    position: relative;
-    width: 44px;
-    height: 24px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.05);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28);
-    transition: box-shadow 0.28s ease;
-  }
-  #scenario-switch::after {
-    content: '';
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 18px;
-    height: 18px;
-    border-radius: 999px;
-    background: var(--scenario-color, #4ade80);
-    box-shadow: 0 0 12px var(--scenario-color), 0 2px 8px rgba(0,0,0,0.34);
-    transition: transform 0.28s ease, background 0.28s ease, box-shadow 0.28s ease;
-  }
-  #scenario-toggle.scenario-good { --scenario-color: #4ade80; }
-  #scenario-toggle.scenario-bad { --scenario-color: #f87171; }
-  #scenario-toggle.scenario-good #scenario-switch::after {
-    transform: translateX(20px);
+    color: rgba(255,255,255,0.92);
   }
 
   /* ── 날짜 다이얼 — 하단 전체폭 ── */
@@ -221,7 +156,6 @@
     color: #fff;
     text-shadow: 0 2px 18px rgba(0,0,0,0.85);
     pointer-events: none;
-    transition: transform 0.08s ease;
   }
   #selected-date-label {
     display: none;
@@ -232,7 +166,6 @@
     font-weight: 300;
     line-height: 1;
     letter-spacing: 0.03em;
-    color: rgba(190,192,186,0.86);
     white-space: nowrap;
   }
   #aqi-row {
@@ -257,12 +190,12 @@
     height: 1px;
     background: linear-gradient(90deg,
       rgba(255,255,255,0),
-      rgba(255,255,255,0.28) 18%,
-      rgba(255,255,255,0.52) 50%,
-      rgba(255,255,255,0.28) 82%,
+      rgba(255,255,255,0.72) 18%,
+      rgba(255,255,255,0.92) 50%,
+      rgba(255,255,255,0.72) 82%,
       rgba(255,255,255,0)
     );
-    box-shadow: 0 0 20px rgba(255,255,255,0.08);
+    box-shadow: 0 0 20px rgba(255,255,255,0.18);
   }
   #slider-wrap::after {
     content: '';
@@ -274,7 +207,7 @@
     transform: translateX(calc(-50% + var(--dial-offset)));
     background: repeating-linear-gradient(
       to right,
-      rgba(255,255,255,0.24) 0 1px,
+      rgba(255,255,255,0.38) 0 1px,
       transparent 1px var(--dial-step)
     );
     -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
@@ -288,11 +221,10 @@
     width: 3px;
     height: 42px;
     transform: translateX(-50%);
-    background: rgba(255,255,255,0.58);
+    background: rgba(255,255,255,0.96);
     border-radius: 2px;
-    box-shadow: 0 0 18px rgba(255,255,255,0.14);
+    box-shadow: 0 0 18px rgba(255,255,255,0.35);
     pointer-events: none;
-    transition: height 0.08s ease, top 0.08s ease, background 0.18s ease;
   }
   #timeline-marker::after {
     content: '';
@@ -303,20 +235,8 @@
     height: 11px;
     transform: translate(-50%, -50%);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--band-color) 58%, #8a8a8a);
-    box-shadow: 0 0 14px color-mix(in srgb, var(--band-color) 55%, transparent);
-    transition: transform 0.08s ease, background 0.18s ease, box-shadow 0.18s ease;
-  }
-  #aqi-panel.is-ticking #timeline-marker {
-    top: 10px;
-    height: 48px;
-    background: rgba(255,255,255,0.72);
-  }
-  #aqi-panel.is-ticking #timeline-marker::after {
-    transform: translate(-50%, -50%) scale(1.18);
-  }
-  #aqi-panel.is-ticking #selected-date-display {
-    transform: translateX(-50%) translateY(-1px);
+    background: var(--band-color);
+    box-shadow: 0 0 18px var(--band-color);
   }
   #dateSlider {
     position: absolute;
@@ -353,11 +273,7 @@
     }
     #banding-title { font-size: 10px; }
     #banding-name { font-size: 18px; }
-    #banding-number { font-size: 34px; }
-    #scenario-control {
-      top: max(34px, env(safe-area-inset-top));
-      right: 22px;
-    }
+    #banding-number { font-size: 40px; }
     #aqi-panel {
       bottom: max(4px, env(safe-area-inset-bottom));
       height: 96px;
@@ -388,13 +304,6 @@
     <span id="banding-name">Low</span>
     <span id="banding-number">1</span>
   </div>
-</div>
-<div id="scenario-control">
-  <span id="scenario-title">Future Scenario</span>
-  <button id="scenario-toggle" class="scenario-good" type="button" aria-label="Switch future air quality scenario" aria-pressed="false">
-    <span id="scenario-label">Good</span>
-    <span id="scenario-switch" aria-hidden="true"></span>
-  </button>
 </div>
 
 <!-- 날짜 다이얼 — 하단 전체폭 -->
@@ -432,25 +341,12 @@ function aqiToRGB(aqi) {
 }
 
 // ── AQI 스타일 정의 ───────────────────────────────────────
-function withLeafBreathParams(a, style) {
-  const stress = clamp((a - 1) / 9, 0, 1);
-  const treeStress = clamp((a - 7) / 3, 0, 1);
-  return {
-    ...style,
-    // 이 두 값을 직접 만지면 잎의 호흡/수축감을 섬세하게 조절할 수 있어요.
-    leafBreathSize: lerp(1.20, 0.10, stress), // AQI 1: 큰 호흡, AQI 10: 작은 호흡
-    leafContract: lerp(0.00, 0.2, stress),   // AQI 1: 펼침, AQI 10: 안쪽으로 수축
-    // tree_scan2.ply 본체 채도 조절. AQI 7 이하는 원본에 가깝고, 10에 가까울수록 회색빛이 강해져요.
-    treeSatMul: lerp(1.0, 0.32, treeStress),
-  };
-}
-
 function getAQIStyle(a) {
-  if (a <= 3) return withLeafBreathParams(a, { label:'Low',       bg:'#1a2e1a', fg:'#4ade80', hueShift:0,   satMul:1.0,  brightMul:1.60, fogDensity:0,    crackOpen:0,    breathSpeed:0.36,  pulseSize:0.18, aqi: a });
-  if (a <= 6) return withLeafBreathParams(a, { label:'Mid',       bg:'#2a2510', fg:'#facc15', hueShift:-15, satMul:0.88, brightMul:1.40, fogDensity:0.08, crackOpen:0.2,  breathSpeed:0.34, pulseSize:0.28, aqi: a });
-  if (a <= 8) return withLeafBreathParams(a, { label:'High',      bg:'#2a1a0a', fg:'#fb923c', hueShift:-35, satMul:0.68, brightMul:1.20, fogDensity:0.2,  crackOpen:0.52, breathSpeed:0.32, pulseSize:0.45, aqi: a });
-  if (a <= 9) return withLeafBreathParams(a, { label:'High',      bg:'#2a0a0a', fg:'#f87171', hueShift:-60, satMul:0.38, brightMul:1.00, fogDensity:0.38, crackOpen:0.82, breathSpeed:0.30, pulseSize:0.68, aqi: a });
-  return      withLeafBreathParams(a, { label:'Very High', bg:'#1a0505', fg:'#990505', hueShift:-90, satMul:0.12, brightMul:0.80, fogDensity:0.60, crackOpen:1.0,  breathSpeed:0.28, pulseSize:0.90, aqi: a });
+  if (a <= 3) return { label:'Low',       bg:'#1a2e1a', fg:'#4ade80', hueShift:0,   satMul:1.0,  brightMul:1.60, fogDensity:0,    crackOpen:0,    breathSpeed:0.36,  pulseSize:0.18, aqi: a };
+  if (a <= 6) return { label:'Mid',       bg:'#2a2510', fg:'#facc15', hueShift:-15, satMul:0.88, brightMul:1.40, fogDensity:0.08, crackOpen:0.2,  breathSpeed:0.34, pulseSize:0.28, aqi: a };
+  if (a <= 8) return { label:'High',      bg:'#2a1a0a', fg:'#fb923c', hueShift:-35, satMul:0.68, brightMul:1.20, fogDensity:0.2,  crackOpen:0.52, breathSpeed:0.32, pulseSize:0.45, aqi: a };
+  if (a <= 9) return { label:'High',      bg:'#2a0a0a', fg:'#f87171', hueShift:-60, satMul:0.38, brightMul:1.00, fogDensity:0.38, crackOpen:0.82, breathSpeed:0.30, pulseSize:0.68, aqi: a };
+  return      { label:'Very High', bg:'#1a0505', fg:'#990505', hueShift:-90, satMul:0.12, brightMul:0.80, fogDensity:0.60, crackOpen:1.0,  breathSpeed:0.28, pulseSize:0.90, aqi: a };
 }
 
 // ── Three.js 기본 세팅 ────────────────────────────────────
@@ -471,33 +367,13 @@ window.addEventListener('resize', () => {
 });
 
 // ── 간단한 오비트 컨트롤 ──────────────────────────────────
-const MODEL_ROTATION_TARGET = new THREE.Vector3(0, 0, 0);
-// EDIT_ROTATION_TARGET_HERE: tree_scan2.ply full-model center pivot.
-const MODEL_ROTATION_Y_OFFSET = 0.0;
-// EDIT_CAMERA_HEIGHT_HERE: lower this value to lower the camera.
-const CAMERA_Y_OFFSET = 0.04;
-const CAMERA_LOOK_AT_Y_OFFSET = 0.0;
-// EDIT_INTRO_CAMERA_HERE: loading angle, Y-axis orbit, and zoom-in timing.
-const INTRO_CAMERA = {
-  duration: 5200,
-  // Horizontal orbit around the model's vertical Y axis.
-  startTheta: -0.52,
-  endTheta: 0.28,
-  // Vertical viewing angle. Kept constant during the intro to avoid tilt.
-  startPhi: Math.PI / 2.5,
-  endPhi: Math.PI / 2.5,
-  startRadius: 3.72,
-  endRadius: 2.95,
-};
 const orbit = {
-  theta: INTRO_CAMERA.startTheta, phi: INTRO_CAMERA.startPhi, radius: INTRO_CAMERA.startRadius,
+  theta: 0, phi: Math.PI / 2.5, radius: 3,
   dragging: false, panning: false,
   last: { x: 0, y: 0 },
-  target: MODEL_ROTATION_TARGET.clone(),
+  target: new THREE.Vector3(0, 0.22, 0),
 };
 let lastInteractionTime = performance.now();
-let introStartTime = null;
-let introActive = true;
 let thetaVelocity = 0;
 let phiVelocity = 0;
 let activeTouchMode = 'none';
@@ -505,29 +381,8 @@ let lastTouch = null;
 let pinchStartDistance = 0;
 let pinchStartRadius = orbit.radius;
 
-function setRotationTargetFromModelCenter(positionArray) {
-  let minX = Infinity, minY = Infinity, minZ = Infinity;
-  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-  for (let i = 0; i < positionArray.length; i += 3) {
-    const x = positionArray[i], y = positionArray[i + 1], z = positionArray[i + 2];
-    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
-    minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-    minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-    minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
-  }
-  if (!Number.isFinite(minX)) return;
-
-  MODEL_ROTATION_TARGET.set(
-    (minX + maxX) * 0.5,
-    (minY + maxY) * 0.5 + MODEL_ROTATION_Y_OFFSET,
-    (minZ + maxZ) * 0.5,
-  );
-  orbit.target.copy(MODEL_ROTATION_TARGET);
-}
-
 function markInteraction() {
   lastInteractionTime = performance.now();
-  introActive = false;
 }
 
 function getTouchDistance(touches) {
@@ -618,23 +473,18 @@ canvas.addEventListener('touchend', e => {
 }, { passive: false });
 
 function updateCamera() {
-  camera.up.set(0, 1, 0);
   camera.position.set(
-    orbit.target.x + orbit.radius * Math.sin(orbit.phi) * Math.sin(orbit.theta),
-    orbit.target.y + orbit.radius * Math.cos(orbit.phi) + CAMERA_Y_OFFSET,
-    orbit.target.z + orbit.radius * Math.sin(orbit.phi) * Math.cos(orbit.theta)
+    orbit.radius * Math.sin(orbit.phi) * Math.sin(orbit.theta),
+    orbit.radius * Math.cos(orbit.phi) + 0.3,
+    orbit.radius * Math.sin(orbit.phi) * Math.cos(orbit.theta)
   );
-  camera.lookAt(
-    orbit.target.x,
-    orbit.target.y + CAMERA_LOOK_AT_Y_OFFSET,
-    orbit.target.z
-  );
+  camera.lookAt(orbit.target);
 }
 
 // ── PLY 로더 (바이너리 가우시안 스플랫) ───────────────────
 async function loadPLY(url, onProgress) {
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Could not load file: ${url}`);
+  if (!res.ok) throw new Error(`파일을 불러올 수 없어요: ${url}`);
   const total = parseInt(res.headers.get('content-length') || '0');
   const reader = res.body.getReader();
   const chunks = [];
@@ -742,7 +592,6 @@ const vertexShader = `
   uniform float uCrackOpen;
   uniform float uHueShift;
   uniform float uSatMul;
-  uniform float uTreeSatMul;
   uniform float uBrightMul;
   uniform vec3  uBoundsMin;
   uniform vec3  uBoundsMax;
@@ -834,7 +683,7 @@ const vertexShader = `
     // 색 변환
     vec3 hsl = rgb2hsl(aColor);
     hsl.x = fract(hsl.x + uHueShift / 360.0);
-    hsl.y = clamp(hsl.y * uSatMul * uTreeSatMul, 0.0, 1.0);
+    hsl.y = clamp(hsl.y * uSatMul, 0.0, 1.0);
     hsl.z = clamp(hsl.z * uBrightMul, 0.0, 1.0);
     vColor = hsl2rgb(hsl);
 
@@ -859,61 +708,6 @@ const fragmentShader = `
     if (r > 0.25) discard;
     float alpha = vOpacity * (1.0 - r * 4.0);
     gl_FragColor = vec4(vColor, alpha);
-  }
-`;
-
-const staticColorShiftVertexShader = `
-  attribute float aSize;
-  attribute vec3  aColor;
-  attribute float aOpacity;
-  uniform float uHueShift;
-  uniform float uSatMul;
-  uniform float uBrightMul;
-  uniform float uPointScale;
-  varying vec3  vColor;
-  varying float vOpacity;
-
-  vec3 rgb2hsl(vec3 c) {
-    float maxC = max(c.r, max(c.g, c.b));
-    float minC = min(c.r, min(c.g, c.b));
-    float l = (maxC + minC) * 0.5;
-    if (maxC == minC) return vec3(0.0, 0.0, l);
-    float d = maxC - minC;
-    float s = l > 0.5 ? d / (2.0 - maxC - minC) : d / (maxC + minC);
-    float h;
-    if (maxC == c.r)      h = (c.g - c.b) / d + (c.g < c.b ? 6.0 : 0.0);
-    else if (maxC == c.g) h = (c.b - c.r) / d + 2.0;
-    else                  h = (c.r - c.g) / d + 4.0;
-    return vec3(h / 6.0, s, l);
-  }
-
-  float hue2rgb(float p, float q, float t) {
-    if (t < 0.0) t += 1.0;
-    if (t > 1.0) t -= 1.0;
-    if (t < 1.0/6.0) return p + (q - p) * 6.0 * t;
-    if (t < 1.0/2.0) return q;
-    if (t < 2.0/3.0) return p + (q - p) * (2.0/3.0 - t) * 6.0;
-    return p;
-  }
-
-  vec3 hsl2rgb(vec3 hsl) {
-    float h = hsl.x, s = hsl.y, l = hsl.z;
-    if (s == 0.0) return vec3(l);
-    float q = l < 0.5 ? l * (1.0 + s) : l + s - l * s;
-    float p = 2.0 * l - q;
-    return vec3(hue2rgb(p,q,h+1.0/3.0), hue2rgb(p,q,h), hue2rgb(p,q,h-1.0/3.0));
-  }
-
-  void main() {
-    vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
-    vec3 hsl = rgb2hsl(aColor);
-    hsl.x = fract(hsl.x + uHueShift / 360.0);
-    hsl.y = clamp(hsl.y * uSatMul, 0.0, 1.0);
-    hsl.z = clamp(hsl.z * uBrightMul, 0.0, 1.0);
-    vColor = hsl2rgb(hsl);
-    vOpacity = aOpacity;
-    gl_Position = projectionMatrix * mvPos;
-    gl_PointSize = aSize * uPointScale * (1.5 / -mvPos.z);
   }
 `;
 
@@ -1577,14 +1371,7 @@ function createSphereParticles() {
   return { mesh, update };
 }
 // ── 메인 ─────────────────────────────────────────────────
-const IS_LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
-const ASSET_BASE = IS_LOCAL
-  ? '.'
-  : 'https://pub-69ed5536056046b686d3e07c38041470.r2.dev';
-
-const PLY_FILE = `${ASSET_BASE}/tree_scan2.ply`;
-const LEAVES_FILE = `${ASSET_BASE}/leaves_only1.ply`;
-const GRASS_FILE = `${ASSET_BASE}/grass.ply`;
+const PLY_FILE = 'tree_scan2.ply';
 
 const loadingEl   = document.getElementById('loading');
 const loadingBar  = document.getElementById('loading-bar');
@@ -1593,39 +1380,17 @@ const errorEl     = document.getElementById('error-msg');
 const pollutionDisplay = document.getElementById('pollution-display');
 const bandingName = document.getElementById('banding-name');
 const bandingNumber = document.getElementById('banding-number');
-const scenarioToggle = document.getElementById('scenario-toggle');
-const scenarioLabel = document.getElementById('scenario-label');
 const dateSlider  = document.getElementById('dateSlider');
 const sliderWrap  = document.getElementById('slider-wrap');
 const aqiPanel    = document.getElementById('aqi-panel');
 const selectedDateValue = document.getElementById('selected-date-value');
 
-const FUTURE_SCENARIOS = {
-  good: {
-    label: 'Good',
-    series: [[2030,-0.032],[2031,-0.064],[2032,-0.064],[2033,-0.256],[2034,-0.288],[2035,-0.288],[2036,-0.288],[2037,-0.288],[2038,-0.288],[2039,-0.352],[2040,-0.352],[2041,-0.352],[2042,-0.352],[2043,-0.352],[2044,-0.384],[2045,-0.416],[2046,-0.416],[2047,-0.416],[2048,-0.416],[2049,-0.416],[2050,-0.448],[2051,-0.48],[2052,-0.48],[2053,-0.48],[2054,-0.384],[2055,-0.384],[2056,-0.384],[2057,-0.384],[2058,-0.384],[2059,-0.384],[2060,-0.384],[2061,-0.384],[2062,-0.448],[2063,-0.512],[2064,-0.512],[2065,-0.512],[2066,-0.512],[2067,-0.512],[2068,-0.544],[2069,-0.544],[2070,-0.544],[2071,-0.544],[2072,-0.544],[2073,-0.544],[2074,-0.544],[2075,-0.544],[2076,-0.544],[2077,-0.544],[2078,-0.544],[2079,-0.544],[2080,-0.576],[2081,-0.64],[2082,-0.64],[2083,-0.64],[2084,-0.64],[2085,-0.608],[2086,-0.608],[2087,-0.608],[2088,-0.608],[2089,-0.608],[2090,-0.576],[2091,-0.576],[2092,-0.576],[2093,-0.576],[2094,-0.576],[2095,-0.576],[2096,-0.576],[2097,-0.576],[2098,-0.608],[2099,-0.608],[2100,-0.608]],
-  },
-  bad: {
-    label: 'Bad',
-    series: [[2030,-0.032],[2031,-0.032],[2032,-0.064],[2033,-0.128],[2034,-0.224],[2035,-0.224],[2036,-0.224],[2037,-0.224],[2038,-0.224],[2039,-0.288],[2040,-0.288],[2041,-0.288],[2042,-0.288],[2043,-0.288],[2044,-0.288],[2045,-0.32],[2046,-0.32],[2047,-0.32],[2048,-0.256],[2049,-0.192],[2050,-0.192],[2051,-0.192],[2052,-0.192],[2053,-0.192],[2054,-0.192],[2055,-0.192],[2056,-0.224],[2057,-0.256],[2058,-0.256],[2059,-0.256],[2060,-0.224],[2061,-0.224],[2062,-0.224],[2063,-0.224],[2064,-0.224],[2065,-0.224],[2066,-0.16],[2067,-0.16],[2068,-0.16],[2069,-0.16],[2070,-0.16],[2071,-0.16],[2072,-0.16],[2073,-0.16],[2074,-0.16],[2075,-0.16],[2076,-0.16],[2077,-0.16],[2078,-0.032],[2079,-0.032],[2080,-0.032],[2081,-0.032],[2082,-0.032],[2083,-0.032],[2084,0.032],[2085,0.032],[2086,0.032],[2087,0.032],[2088,0.032],[2089,0.032],[2090,0.032],[2091,0.032],[2092,0.032],[2093,0.032],[2094,0.032],[2095,0.064],[2096,0.224],[2097,0.224],[2098,0.224],[2099,0.224],[2100,0.224]],
-  },
-};
-
-const FUTURE_BEST_VALUE = Math.min(...FUTURE_SCENARIOS.good.series.map(([, value]) => value));
-const FUTURE_WORST_VALUE = Math.max(...FUTURE_SCENARIOS.bad.series.map(([, value]) => value));
-
 let splatMaterial = null;
 let leavesMaterial = null;
-let grassMaterial = null;
 let particleSystem = null;
 let trunkFlow = null;
 let sphereParticles = null;
 let airQualityDays = [];
-let observedDays = [];
-let futureScenario = 'good';
-let selectedTimelineIndex = 0;
-let lastTickIndex = null;
-let tickTimer = null;
 let currentStyle = getAQIStyle(1);
 let targetStyle  = { ...currentStyle };
 let lerpT = 1;
@@ -1659,128 +1424,50 @@ function updateTimelinePosition() {
   aqiPanel.style.setProperty('--dial-offset', `${offset}px`);
 }
 
-function futureValueToAQI(value) {
-  const span = FUTURE_WORST_VALUE - FUTURE_BEST_VALUE;
-  if (!span) return 1;
-  const t = clamp((value - FUTURE_BEST_VALUE) / span, 0, 1);
-  return Math.round(1 + t * 9);
-}
-
-function buildFutureTimeline(scenarioKey) {
-  const scenario = FUTURE_SCENARIOS[scenarioKey] || FUTURE_SCENARIOS.good;
-  return scenario.series.map(([year, value]) => {
-    const aqi = futureValueToAQI(value);
-    return {
-      type: 'future',
-      scenario: scenarioKey,
-      year,
-      value,
-      dateKey: `${year}-01-01`,
-      aqi,
-      pm25AQI: aqi,
-      pm10AQI: aqi,
-      unavailable: false,
-      sampleCount: 0,
-    };
-  });
-}
-
-function updateScenarioToggle() {
-  const isBad = futureScenario === 'bad';
-  scenarioToggle.className = isBad ? 'scenario-bad' : 'scenario-good';
-  scenarioToggle.setAttribute('aria-pressed', String(isBad));
-  scenarioLabel.textContent = isBad ? 'Bad' : 'Good';
-}
-
-function rebuildTimeline(keepIndex = selectedTimelineIndex) {
-  airQualityDays = [...observedDays, ...buildFutureTimeline(futureScenario)];
-  dateSlider.max = Math.max(0, airQualityDays.length - 1);
-  setSelectedDate(clamp(keepIndex, 0, airQualityDays.length - 1));
-  updateScenarioToggle();
-}
-
-function triggerSliderTick() {
-  aqiPanel.classList.remove('is-ticking');
-  void aqiPanel.offsetWidth;
-  aqiPanel.classList.add('is-ticking');
-  clearTimeout(tickTimer);
-  tickTimer = setTimeout(() => aqiPanel.classList.remove('is-ticking'), 90);
-  if ('vibrate' in navigator) {
-    navigator.vibrate(6);
-  }
-}
-
 function setSelectedDate(index) {
   if (!airQualityDays.length) return;
   const safeIndex = Math.round(clamp(index, 0, airQualityDays.length - 1));
-  const previousIndex = selectedTimelineIndex;
   const record = airQualityDays[safeIndex];
-  selectedTimelineIndex = safeIndex;
   dateSlider.value = safeIndex;
   updateTimelinePosition();
   applyAQI(record.aqi, record);
   updateDateText(record, safeIndex);
-  if (lastTickIndex !== null && safeIndex !== previousIndex) {
-    triggerSliderTick();
-  }
-  lastTickIndex = safeIndex;
 }
 
 function updateDateText(record, index) {
-  const todayIndex = observedDays.length ? observedDays.length - 1 : airQualityDays.length - 1;
-  if (record.type === 'future') {
-    selectedDateValue.textContent = String(record.year);
-  } else {
-    selectedDateValue.textContent = index === todayIndex ? 'Today' : formatDateKey(record.dateKey, false);
-  }
+  const todayIndex = airQualityDays.length - 1;
+  selectedDateValue.textContent = index === todayIndex ? 'Today' : formatDateKey(record.dateKey, false);
 }
 
 dateSlider.addEventListener('input', () => {
+  markInteraction();
   setSelectedDate(parseInt(dateSlider.value, 10));
 });
-scenarioToggle.addEventListener('click', () => {
-  futureScenario = futureScenario === 'good' ? 'bad' : 'good';
-  rebuildTimeline(selectedTimelineIndex);
-});
 let timelineDragging = false;
-let timelineStartX = 0;
-let timelineStartIndex = 0;
-let timelineMoved = false;
-function getTimelineStep() {
-  const width = sliderWrap.getBoundingClientRect().width || window.innerWidth;
-  return clamp(width / 9.8, 32, 44);
-}
-function setDateFromTimelineDrag(clientX) {
-  if (!airQualityDays.length) return;
-  const delta = clientX - timelineStartX;
-  const index = timelineStartIndex - Math.round(delta / getTimelineStep());
-  setSelectedDate(index);
-}
-function nudgeDateFromTimelineX(clientX) {
+function setDateFromTimelineX(clientX) {
   if (!airQualityDays.length) return;
   const rect = sliderWrap.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const delta = clientX - centerX;
-  if (Math.abs(delta) < 10) return;
-  setSelectedDate(selectedTimelineIndex + (delta > 0 ? 1 : -1));
+  const pad = Math.min(76, rect.width * 0.16);
+  const usableWidth = Math.max(1, rect.width - pad * 2);
+  const t = clamp((clientX - rect.left - pad) / usableWidth, 0, 1);
+  const maxIndex = airQualityDays.length - 1;
+  const index = maxIndex - Math.round(t * maxIndex);
+  markInteraction();
+  setSelectedDate(index);
 }
 sliderWrap.addEventListener('pointerdown', e => {
   e.preventDefault();
   timelineDragging = true;
-  timelineMoved = false;
-  timelineStartX = e.clientX;
-  timelineStartIndex = selectedTimelineIndex;
   sliderWrap.setPointerCapture?.(e.pointerId);
+  setDateFromTimelineX(e.clientX);
 });
 sliderWrap.addEventListener('pointermove', e => {
   if (!timelineDragging) return;
   e.preventDefault();
-  if (Math.abs(e.clientX - timelineStartX) > 3) timelineMoved = true;
-  setDateFromTimelineDrag(e.clientX);
+  setDateFromTimelineX(e.clientX);
 });
 sliderWrap.addEventListener('pointerup', e => {
   e.preventDefault();
-  if (!timelineMoved) nudgeDateFromTimelineX(e.clientX);
   timelineDragging = false;
   sliderWrap.releasePointerCapture?.(e.pointerId);
 });
@@ -1823,7 +1510,6 @@ async function init() {
     }
     const bMin = new THREE.Vector3((minX-centerX)*scale, -(maxY-centerY)*scale, (minZ-centerZ)*scale);
     const bMax = new THREE.Vector3((maxX-centerX)*scale, -(minY-centerY)*scale, (maxZ-centerZ)*scale);
-    setRotationTargetFromModelCenter(positions);
 
     // 지오메트리
     const geo = new THREE.BufferGeometry();
@@ -1840,7 +1526,6 @@ async function init() {
         uCrackOpen:  { value: 0.0 },
         uHueShift:   { value: 0.0 },
         uSatMul:     { value: 1.0 },
-        uTreeSatMul: { value: 1.0 },
         uBrightMul:  { value: 1.4 },
         uBoundsMin:  { value: bMin },
         uBoundsMax:  { value: bMax },
@@ -1859,7 +1544,7 @@ async function init() {
 
     // ── 이파리 PLY 별도 로드 ──
     try {
-      const leavesBuffer = await loadPLY(LEAVES_FILE, () => {});
+      const leavesBuffer = await loadPLY('leaves_only1.ply', () => {});
       const leavesHeader = parsePLYHeader(leavesBuffer);
       const { positions: lPos, colors: lCol, sizes: lSiz, opacities: lOpa } = buildSplatGeometry(leavesBuffer, leavesHeader);
 
@@ -1885,7 +1570,6 @@ async function init() {
         uniform float uTime;
         uniform float uBreathSpeed;
         uniform float uPulseSize;
-        uniform float uLeafContract;
         uniform float uHueShift;
         uniform float uSatMul;
         uniform float uBrightMul;
@@ -1940,10 +1624,9 @@ async function init() {
           // 나무 중심에서 바깥으로 — 이파리는 훨씬 크게 팽창
           vec3 center = (uBoundsMin + uBoundsMax) * 0.5;
           vec3 dir = normalize(position - center + vec3(0.001));
-          vec3 basePos = position - dir * uLeafContract * (0.35 + heightFrac * 0.65);
           // 상단 이파리일수록 더 크게 움직임
           float leafAmp = uPulseSize * 0.12 * (0.4 + heightFrac * 0.6);
-          vec3 breathPos = basePos + dir * breathPhase * leafAmp;
+          vec3 breathPos = position + dir * breathPhase * leafAmp;
 
           // 추가로 옆으로도 살랑거림
           breathPos.x += sin(t * 0.053 + leafPhase * 1.4) * uPulseSize * 0.04;
@@ -1960,7 +1643,7 @@ async function init() {
 
           vOpacity = aOpacity;
           gl_Position = projectionMatrix * mvPos;
-          gl_PointSize = aSize * (1.0 + breathPhase * uPulseSize * 0.18) * (1.5 / -mvPos.z);
+          gl_PointSize = aSize * (1.0 + breathPhase * 0.08) * (1.5 / -mvPos.z);
         }
       `;
 
@@ -1981,7 +1664,6 @@ async function init() {
           uTime:       { value: 0 },
           uBreathSpeed:{ value: 1.0 },
           uPulseSize:  { value: 0.18 },
-          uLeafContract: { value: 0.0 },
           uHueShift:   { value: 0.0 },
           uSatMul:     { value: 1.0 },
           uBrightMul:  { value: 1.0 },
@@ -1997,50 +1679,9 @@ async function init() {
 
       const leavesPoints = new THREE.Points(lGeo, leavesMaterial);
       scene.add(leavesPoints);
-      console.log('Leaves loaded');
+      console.log('이파리 로드 완료');
     } catch(e) {
-      console.log('Leaves file not found; skipping:', e.message);
-    }
-
-    // ── 바닥 잔디 PLY 별도 로드 ──
-    try {
-      const grassBuffer = await loadPLY(GRASS_FILE, () => {});
-      const grassHeader = parsePLYHeader(grassBuffer);
-      const { positions: gPos, colors: gCol, sizes: gSiz, opacities: gOpa } = buildSplatGeometry(grassBuffer, grassHeader);
-
-      // 잔디도 tree_scan2와 같은 좌표계로 정규화
-      for (let i = 0; i < gPos.length; i += 3) {
-        gPos[i]   = (gPos[i]   - centerX) * scale;
-        gPos[i+1] = -(gPos[i+1] - centerY) * scale;
-        gPos[i+2] = (gPos[i+2] - centerZ) * scale;
-      }
-
-      const gGeo = new THREE.BufferGeometry();
-      gGeo.setAttribute('position', new THREE.BufferAttribute(gPos, 3));
-      gGeo.setAttribute('aColor',   new THREE.BufferAttribute(gCol, 3));
-      gGeo.setAttribute('aSize',    new THREE.BufferAttribute(gSiz, 1));
-      gGeo.setAttribute('aOpacity', new THREE.BufferAttribute(gOpa, 1));
-
-      grassMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-          uHueShift:  { value: 0.0 },
-          uSatMul:    { value: 1.0 },
-          uBrightMul: { value: 1.0 },
-          uPointScale:{ value: 1.0 },
-        },
-        vertexShader: staticColorShiftVertexShader,
-        fragmentShader,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.NormalBlending,
-      });
-
-      const grassPoints = new THREE.Points(gGeo, grassMaterial);
-      grassPoints.renderOrder = -1;
-      scene.add(grassPoints);
-      console.log('Grass loaded');
-    } catch(e) {
-      console.log('Grass file not found; skipping:', e.message);
+      console.log('leaves_only1.ply 없음, 스킵:', e.message);
     }
 
     // 브랜치 대표점 계산 → 셰이더 uniform에 설정
@@ -2057,7 +1698,7 @@ async function init() {
     for (let i = 0; i < n; i++) {
       splatMaterial.uniforms.uBranchCenters.value[i].copy(branchCenters[i]);
     }
-    console.log(`Branch centers assigned: ${n}`);
+    console.log(`브랜치 센터 ${n}개 설정완료`);
 
     // 파티클
     // particleSystem = createParticleSystem();
@@ -2082,10 +1723,10 @@ async function init() {
       <div style="font-size:32px;margin-bottom:8px;">🌳</div>
       <div style="color:rgba(255,255,255,0.7); margin-bottom:12px;">${err.message}</div>
       <div style="font-size:11px; line-height:2;">
-        <b style="color:rgba(255,255,255,0.5)">Please check:</b><br>
-        1. <code style="color:#4ade80">tree_scan2.ply</code> is in the same folder as this HTML file.<br>
-        2. Open this page through a local server, such as VS Code Live Server. Do not open the HTML file directly.<br>
-        3. Check the asset file names for typos.
+        <b style="color:rgba(255,255,255,0.5)">확인해주세요:</b><br>
+        1. <code style="color:#4ade80">tree_scan2.ply</code> 파일이 이 HTML과 같은 폴더에 있는지<br>
+        2. VS Code Live Server로 열었는지 (파일을 직접 더블클릭하면 안 돼요)<br>
+        3. 파일 이름에 오타가 없는지
       </div>
     `;
   }
@@ -2098,18 +1739,7 @@ function animate() {
   const idleMs = performance.now() - lastInteractionTime;
   const interacting = orbit.dragging || orbit.panning || activeTouchMode !== 'none';
 
-  if (introActive && !interacting) {
-    if (introStartTime === null) introStartTime = performance.now();
-    const introT = clamp((performance.now() - introStartTime) / INTRO_CAMERA.duration, 0, 1);
-    const introEase = 1 - Math.pow(1 - introT, 3);
-    orbit.theta = lerp(INTRO_CAMERA.startTheta, INTRO_CAMERA.endTheta, introEase);
-    orbit.phi = INTRO_CAMERA.startPhi;
-    orbit.radius = lerp(INTRO_CAMERA.startRadius, INTRO_CAMERA.endRadius, introEase);
-    if (introT >= 1) {
-      introActive = false;
-      lastInteractionTime = performance.now();
-    }
-  } else if (!interacting) {
+  if (!interacting) {
     if (Math.abs(thetaVelocity) > 0.00001 || Math.abs(phiVelocity) > 0.00001) {
       orbit.theta += thetaVelocity;
       orbit.phi = clamp(orbit.phi + phiVelocity, 0.24, Math.PI - 0.24);
@@ -2133,9 +1763,6 @@ function animate() {
       crackOpen:   lerp(currentStyle.crackOpen,   targetStyle.crackOpen,   e),
       breathSpeed: lerp(currentStyle.breathSpeed, targetStyle.breathSpeed, e),
       pulseSize:   lerp(currentStyle.pulseSize,   targetStyle.pulseSize,   e),
-      leafBreathSize: lerp(currentStyle.leafBreathSize, targetStyle.leafBreathSize, e),
-      leafContract:   lerp(currentStyle.leafContract,   targetStyle.leafContract,   e),
-      treeSatMul:     lerp(currentStyle.treeSatMul,     targetStyle.treeSatMul,     e),
     };
   }
 
@@ -2149,28 +1776,18 @@ function animate() {
     // 나무 원본은 색 변화 없이 항상 고정
     u.uHueShift.value    = 0;
     u.uSatMul.value      = 1.0;
-    u.uTreeSatMul.value  = currentStyle.treeSatMul;
     u.uBrightMul.value   = 1.4;
   }
 
-  // 이파리 호흡 업데이트 — AQI가 낮을수록 크게 호흡하고, 높을수록 수축
+  // 이파리 유니폼 업데이트 — 더 강한 pulseSize
   if (leavesMaterial) {
     const u = leavesMaterial.uniforms;
     u.uTime.value        = elapsed * 60;
     u.uBreathSpeed.value = currentStyle.breathSpeed;
-    u.uPulseSize.value   = currentStyle.leafBreathSize;
-    u.uLeafContract.value = currentStyle.leafContract;
+    u.uPulseSize.value   = currentStyle.pulseSize * 2.5; // 이파리는 2.5배 더 드라마틱
     u.uHueShift.value    = currentStyle.hueShift;
     u.uSatMul.value      = currentStyle.satMul;
     u.uBrightMul.value   = currentStyle.brightMul;
-  }
-
-  // 바닥 잔디 업데이트 — 움직임 없이 AQI 색/채도/밝기만 반응
-  if (grassMaterial) {
-    const u = grassMaterial.uniforms;
-    u.uHueShift.value  = currentStyle.hueShift;
-    u.uSatMul.value    = currentStyle.satMul;
-    u.uBrightMul.value = currentStyle.brightMul;
   }
 
   // 배경색
@@ -2196,29 +1813,6 @@ function animate() {
 let globalPM25AQI = 1;
 let globalPM10AQI = 1;
 
-// ── 날짜 유틸 ─────────────────────────────────────────────
-function getLondonDateKey(date = new Date()) {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/London',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-  }).formatToParts(date);
-  const byType = Object.fromEntries(parts.map(p => [p.type, p.value]));
-  return `${byType.year}-${byType.month}-${byType.day}`;
-}
-function shiftDateKey(dateKey, delta) {
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day + delta, 12, 0, 0));
-  return date.toISOString().slice(0, 10);
-}
-function formatDateKey(dateKey, includeYear = true) {
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-  const options = { day: 'numeric', month: 'long', timeZone: 'UTC' };
-  if (includeYear) options.year = 'numeric';
-  return date.toLocaleDateString('en-GB', options);
-}
-
-// ── DAQI 변환 ─────────────────────────────────────────────
 function pm25ToDAQI(v) {
   if (v <= 11) return 1; if (v <= 23) return 2; if (v <= 35) return 3;
   if (v <= 41) return 4; if (v <= 47) return 5; if (v <= 53) return 6;
@@ -2232,159 +1826,134 @@ function pm10ToDAQI(v) {
   return 10;
 }
 
-// ── Open-Meteo: 14일 히스토리 베이스 ──────────────────────
-function getHourlyValue(data, dateKey, todayOnly) {
+function getLondonDateKey(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const byType = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${byType.year}-${byType.month}-${byType.day}`;
+}
+
+function shiftDateKey(dateKey, delta) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + delta, 12, 0, 0));
+  return date.toISOString().slice(0, 10);
+}
+
+function formatDateKey(dateKey, includeYear = true) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  const options = {
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  };
+  if (includeYear) options.year = 'numeric';
+  return date.toLocaleDateString('en-GB', options);
+}
+
+function isValidNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function averageHourlyForDate(data, dateKey) {
   const times = data.hourly?.time || [];
-  const pm25v  = data.hourly?.pm2_5 || [];
-  const pm10v  = data.hourly?.pm10  || [];
-  if (todayOnly) {
-    // 현재 시각에 가장 가까운 과거 시간값 한 개
-    const nowHour = new Date().toISOString().slice(0, 13);
-    let best = -1;
-    for (let i = 0; i < times.length; i++) {
-      if (!times[i].startsWith(dateKey)) continue;
-      if (times[i].slice(0, 13) <= nowHour) best = i;
-    }
-    if (best < 0) return null;
-    const p25 = pm25v[best], p10 = pm10v[best];
-    if (!Number.isFinite(p25) || !Number.isFinite(p10)) return null;
-    return { pm25: p25, pm10: p10, count: 1 };
-  }
-  // 과거 날짜: 그날 중 가장 나쁜 시간값 (최대 DAQI 기준)
-  let worstPM25 = 0, worstPM10 = 0, worstDAQI = 0, n = 0;
+  const pm25Values = data.hourly?.pm2_5 || [];
+  const pm10Values = data.hourly?.pm10 || [];
+  let pm25Sum = 0;
+  let pm10Sum = 0;
+  let count = 0;
+
   for (let i = 0; i < times.length; i++) {
     if (!times[i].startsWith(dateKey)) continue;
-    if (!Number.isFinite(pm25v[i]) || !Number.isFinite(pm10v[i])) continue;
-    const daqi = Math.max(pm25ToDAQI(pm25v[i]), pm10ToDAQI(pm10v[i]));
-    if (daqi > worstDAQI) {
-      worstDAQI = daqi;
-      worstPM25 = pm25v[i];
-      worstPM10 = pm10v[i];
-    }
-    n++;
-  }
-  return n ? { pm25: worstPM25, pm10: worstPM10, count: n } : null;
-}
-
-async function fetchOpenMeteo() {
-  const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=51.4569&longitude=-0.0160&hourly=pm2_5,pm10&past_days=13&forecast_days=1&timezone=Europe%2FLondon';
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
-  return res.json();
-}
-
-// ── LAQN: 오늘 실시간 DAQI (Hourly 엔드포인트, 날짜 파라미터 없음) ──
-async function fetchLAQNHourlyToday(dateKey) {
-  const url = 'https://api.erg.ic.ac.uk/AirQuality/Hourly/MonitoringIndex/GroupName=London/Json';
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`LAQN Hourly HTTP ${res.status}`);
-  const data = await res.json();
-
-  const authorities = data?.HourlyAirQualityIndex?.LocalAuthority;
-  if (!authorities) {
-    console.warn('[LAQN] Unexpected response shape:', JSON.stringify(data).slice(0, 200));
-    return null;
+    const pm25 = pm25Values[i];
+    const pm10 = pm10Values[i];
+    if (!isValidNumber(pm25) || !isValidNumber(pm10)) continue;
+    pm25Sum += pm25;
+    pm10Sum += pm10;
+    count += 1;
   }
 
-  const authArr = Array.isArray(authorities) ? authorities : [authorities];
-  console.log('[LAQN] Local authority list:', authArr.map(a => a['@LocalAuthorityName']).join(', '));
-
-  const lewisham = authArr.find(a =>
-    a['@LocalAuthorityName']?.toLowerCase().includes('lewisham')
-  );
-  if (!lewisham) return null;
-
-  const sites = lewisham.Site;
-  if (!sites) return null;
-  const siteArr = Array.isArray(sites) ? sites : [sites];
-
-  let aqi = 0, pm25 = 0, pm10 = 0;
-  for (const s of siteArr) {
-    const i = parseInt(s['@AirQualityIndex']) || 0;
-    if (i > aqi) aqi = i;
-    const sp = s.Species;
-    if (sp) {
-      for (const x of (Array.isArray(sp) ? sp : [sp])) {
-        const c = x['@SpeciesCode']?.toUpperCase();
-        const v = parseInt(x['@AirQualityIndex']) || 0;
-        if (c === 'PM25' && v > pm25) pm25 = v;
-        if (c === 'PM10' && v > pm10) pm10 = v;
-      }
-    }
-  }
-  if (!aqi) return null;
-  console.log(`[LAQN] Lewisham DAQI: ${aqi} (PM2.5:${pm25||aqi} PM10:${pm10||aqi})`);
-  return { dateKey, aqi, pm25AQI: pm25||aqi, pm10AQI: pm10||aqi, unavailable: false, sampleCount: siteArr.length };
+  if (!count) return null;
+  return {
+    time: dateKey,
+    pm25: pm25Sum / count,
+    pm10: pm10Sum / count,
+    count,
+  };
 }
 
-// ── 타임라인 조립 ─────────────────────────────────────────
-function buildFallbackRecord(dateKey) {
-  return { dateKey, aqi: 1, pm25AQI: 1, pm10AQI: 1, unavailable: true, sampleCount: 0 };
+function buildAirQualityRecord(dateKey, pm25, pm10, sourceTime, unavailable = false, sampleCount = 0) {
+  const pm25AQI = unavailable ? 1 : pm25ToDAQI(pm25);
+  const pm10AQI = unavailable ? 1 : pm10ToDAQI(pm10);
+  return {
+    dateKey,
+    sourceTime,
+    pm25,
+    pm10,
+    pm25AQI,
+    pm10AQI,
+    aqi: Math.max(pm25AQI, pm10AQI),
+    unavailable,
+    sampleCount,
+  };
 }
+
 function buildFallbackTimeline() {
-  const today = getLondonDateKey();
-  return Array.from({ length: 14 }, (_, i) => buildFallbackRecord(shiftDateKey(today, i - 13)));
+  const todayKey = getLondonDateKey();
+  return Array.from({ length: 14 }, (_, index) => {
+    const dateKey = shiftDateKey(todayKey, index - 13);
+    return buildAirQualityRecord(dateKey, 0, 0, null, true);
+  });
 }
 
 async function fetchAirQualityTimeline() {
+  const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=51.4569&longitude=-0.0160&hourly=pm2_5,pm10&past_days=13&forecast_days=1&timezone=Europe%2FLondon';
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Air quality request failed: ${response.status}`);
+  const data = await response.json();
+
   const todayKey = getLondonDateKey();
-  const dates = Array.from({ length: 14 }, (_, i) => shiftDateKey(todayKey, i - 13));
+  const dates = Array.from({ length: 14 }, (_, index) => shiftDateKey(todayKey, index - 13));
 
-  // Open-Meteo (히스토리) + LAQN Hourly (오늘 실측) 병렬 요청
-  const [omResult, laqnResult] = await Promise.allSettled([
-    fetchOpenMeteo(),
-    fetchLAQNHourlyToday(todayKey),
-  ]);
-
-  const omData    = omResult.status    === 'fulfilled' ? omResult.value    : null;
-  const todayLAQN = laqnResult.status  === 'fulfilled' ? laqnResult.value  : null;
-
-  if (!omData)    console.warn('[Open-Meteo] Failed:', omResult.reason?.message);
-  if (!todayLAQN) console.warn('[LAQN] No live reading for today; using nearest Open-Meteo value.');
-
-  return dates.map((dateKey, i) => {
-    const isToday = i === dates.length - 1;
-
-    if (isToday && todayLAQN) return todayLAQN;
-
-    if (omData) {
-      const h = getHourlyValue(omData, dateKey, isToday);
-      if (h) {
-        const p25 = pm25ToDAQI(h.pm25), p10 = pm10ToDAQI(h.pm10);
-        return { dateKey, aqi: Math.max(p25, p10), pm25AQI: p25, pm10AQI: p10, unavailable: false, sampleCount: h.count };
-      }
+  return dates.map(dateKey => {
+    const daily = averageHourlyForDate(data, dateKey);
+    if (daily) {
+      return buildAirQualityRecord(dateKey, daily.pm25, daily.pm10, daily.time, false, daily.count);
     }
-    return buildFallbackRecord(dateKey);
+
+    return buildAirQualityRecord(dateKey, 0, 0, null, true);
   });
 }
 
 async function startApp() {
   try {
-    observedDays = await fetchAirQualityTimeline();
+    airQualityDays = await fetchAirQualityTimeline();
   } catch(error) {
-    console.error('Air quality data failed:', error);
-    observedDays = buildFallbackTimeline();
+    console.error('공기질 데이터 실패:', error);
+    airQualityDays = buildFallbackTimeline();
   }
 
-  airQualityDays = [...observedDays, ...buildFutureTimeline(futureScenario)];
   dateSlider.max = Math.max(0, airQualityDays.length - 1);
-  const todayIndex = observedDays.length - 1;
-  dateSlider.value = todayIndex;
-  setSelectedDate(todayIndex);
-  updateScenarioToggle();
+  dateSlider.value = dateSlider.max;
+  setSelectedDate(airQualityDays.length - 1);
 
-  const r = observedDays[observedDays.length - 1];
-  console.log(`Today (${r.dateKey}) DAQI:${r.aqi} PM2.5:${r.pm25AQI} PM10:${r.pm10AQI} unavailable:${r.unavailable}`);
-  console.log(`Future scenario: ${FUTURE_SCENARIOS[futureScenario].label}, PDF upper line 2030-2100`);
+  const todayRecord = airQualityDays[airQualityDays.length - 1];
+  console.log(`Selected date: ${todayRecord.dateKey}, source: daily average (${todayRecord.sampleCount || 0} hourly samples)`);
+  console.log(`PM2.5 daily avg: ${todayRecord.pm25} µg/m³ → DAQI: ${todayRecord.pm25AQI}`);
+  console.log(`PM10 daily avg:  ${todayRecord.pm10} µg/m³ → DAQI: ${todayRecord.pm10AQI}`);
+  console.log(`Air Pollution banding: ${todayRecord.aqi}`);
 
-  currentStyle = getAQIStyle(r.aqi);
-  targetStyle  = { ...currentStyle };
+  currentStyle = getAQIStyle(todayRecord.aqi);
+  targetStyle = { ...currentStyle };
   init();
 }
 
 // 브라우저가 열리면 startApp 실행
 window.addEventListener('load', startApp);
-
 
 </script>
 </body>
