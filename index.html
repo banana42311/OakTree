@@ -270,20 +270,15 @@
     top: 19px;
     width: var(--dial-width);
     height: 30px;
-    transform: translateX(calc(-50% + var(--dial-offset)));
     background: repeating-linear-gradient(
       to right,
-      rgba(255,255,255,0.24) 0 1px,
+      rgba(255,255,255,0.15) 0 1px,
       transparent 1px var(--dial-step)
     );
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
-    mask-image: linear-gradient(90deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 1%, #000 99%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 1%, #000 99%, transparent 100%);
     pointer-events: none;
     will-change: transform;
-    transition: transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-  #dial-bars.is-dragging {
-    transition: transform 0.04s linear;
   }
   #timeline-marker {
     position: absolute;
@@ -1582,7 +1577,10 @@ function createSphereParticles() {
   return { mesh, update };
 }
 // ── 메인 ─────────────────────────────────────────────────
-const ASSET_BASE = 'https://pub-69ed5536056046b686d3e07c38041470.r2.dev';
+const IS_LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+const ASSET_BASE = IS_LOCAL
+  ? '.'
+  : 'https://pub-69ed5536056046b686d3e07c38041470.r2.dev';
 
 const PLY_FILE = `${ASSET_BASE}/tree_scan2.ply`;
 const LEAVES_FILE = `${ASSET_BASE}/leaves_only1.ply`;
@@ -1649,30 +1647,21 @@ function applyAQI(aqi, record = null) {
   }
 }
 
-function updateTimelinePosition(isDragging = false) {
+let dialCurrentOffset = 0;
+let dialTargetOffset = 0;
+let dialRafId = null;
+
+function updateTimelinePosition() {
   const min = Number(dateSlider.min);
   const max = Number(dateSlider.max);
   const value = Number(dateSlider.value);
   const steps = Math.max(1, max - min);
   const width = sliderWrap.getBoundingClientRect().width || window.innerWidth;
   const step = clamp(width / 9.8, 32, 44);
-  const offset = (steps / 2 - (value - min)) * step;
+  dialTargetOffset = (steps / 2 - (value - min)) * step;
   aqiPanel.style.setProperty('--dial-step', `${step}px`);
   aqiPanel.style.setProperty('--dial-width', `${steps * step}px`);
-  aqiPanel.style.setProperty('--dial-offset', `${offset}px`);
-  // Apply transform directly to dial-bars for smooth animation
-  if (dialBars) {
-    // Preserve skew if dragging; reset on release
-    const skew = isDragging ? (dragVelocity ? clamp(-dragVelocity * 0.18, -12, 12) : 0) : 0;
-    if (!isDragging) {
-      dialBars.style.transform = `translateX(calc(-50% + ${offset}px)) skewX(${skew}deg)`;
-    }
-    if (isDragging) {
-      dialBars.classList.add('is-dragging');
-    } else {
-      dialBars.classList.remove('is-dragging');
-    }
-  }
+  startDialAnim();
 }
 
 function futureValueToAQI(value) {
@@ -1726,14 +1715,14 @@ function triggerSliderTick() {
   }
 }
 
-function setSelectedDate(index, isDragging = false) {
+function setSelectedDate(index) {
   if (!airQualityDays.length) return;
   const safeIndex = Math.round(clamp(index, 0, airQualityDays.length - 1));
   const previousIndex = selectedTimelineIndex;
   const record = airQualityDays[safeIndex];
   selectedTimelineIndex = safeIndex;
   dateSlider.value = safeIndex;
-  updateTimelinePosition(isDragging);
+  updateTimelinePosition();
   applyAQI(record.aqi, record);
   updateDateText(record, safeIndex);
   if (lastTickIndex !== null && safeIndex !== previousIndex) {
@@ -1770,7 +1759,7 @@ function setDateFromTimelineDrag(clientX) {
   if (!airQualityDays.length) return;
   const delta = clientX - timelineStartX;
   const index = timelineStartIndex - Math.round(delta / getTimelineStep());
-  setSelectedDate(index, true);
+  setSelectedDate(index);
 }
 function nudgeDateFromTimelineX(clientX) {
   if (!airQualityDays.length) return;
@@ -1788,55 +1777,55 @@ sliderWrap.addEventListener('pointerdown', e => {
   timelineStartIndex = selectedTimelineIndex;
   lastDragX = e.clientX;
   dragVelocity = 0;
-  if (skewRaf) { cancelAnimationFrame(skewRaf); skewRaf = null; }
   sliderWrap.setPointerCapture?.(e.pointerId);
 });
 let lastDragX = 0;
 let dragVelocity = 0;
-let skewRaf = null;
 
-
-function decaySkew() {
+function dialAnimLoop() {
   if (!dialBars) return;
-  dragVelocity *= 0.78;
-  const skew = clamp(dragVelocity * 0.18, -12, 12);
-  const offset = parseFloat(aqiPanel.style.getPropertyValue('--dial-offset')) || 0;
-  dialBars.style.transform = `translateX(calc(-50% + ${offset}px)) skewX(${skew}deg)`;
-  if (Math.abs(dragVelocity) > 0.5) {
-    skewRaf = requestAnimationFrame(decaySkew);
+  // Lerp offset: fast during drag, smooth on release
+  const speed = timelineDragging ? 0.55 : 0.12;
+  dialCurrentOffset += (dialTargetOffset - dialCurrentOffset) * speed;
+
+  // Skew: proportional to velocity, decays when not dragging
+  if (!timelineDragging) dragVelocity *= 0.75;
+  const skew = clamp(-dragVelocity * 0.14, -10, 10);
+
+  dialBars.style.transform = `translateX(calc(-50% + ${dialCurrentOffset}px)) skewX(${skew}deg)`;
+
+  const stillMoving = Math.abs(dialTargetOffset - dialCurrentOffset) > 0.1 || Math.abs(dragVelocity) > 0.2;
+  if (stillMoving) {
+    dialRafId = requestAnimationFrame(dialAnimLoop);
   } else {
-    dialBars.style.transform = `translateX(calc(-50% + ${offset}px)) skewX(0deg)`;
-    dragVelocity = 0;
+    dialBars.style.transform = `translateX(calc(-50% + ${dialTargetOffset}px)) skewX(0deg)`;
+    dialRafId = null;
   }
+}
+
+function startDialAnim() {
+  if (!dialRafId) dialRafId = requestAnimationFrame(dialAnimLoop);
 }
 
 sliderWrap.addEventListener('pointermove', e => {
   if (!timelineDragging) return;
   e.preventDefault();
   if (Math.abs(e.clientX - timelineStartX) > 3) timelineMoved = true;
-  dragVelocity = (e.clientX - lastDragX) * 0.6 + dragVelocity * 0.4;
+  dragVelocity = (e.clientX - lastDragX) * 0.5 + dragVelocity * 0.5;
   lastDragX = e.clientX;
   setDateFromTimelineDrag(e.clientX);
-  // Apply skew while dragging
-  if (dialBars) {
-    const offset = parseFloat(aqiPanel.style.getPropertyValue('--dial-offset')) || 0;
-    const skew = clamp(-dragVelocity * 0.18, -12, 12);
-    dialBars.style.transform = `translateX(calc(-50% + ${offset}px)) skewX(${skew}deg)`;
-  }
+  startDialAnim();
 });
 sliderWrap.addEventListener('pointerup', e => {
   e.preventDefault();
   if (!timelineMoved) nudgeDateFromTimelineX(e.clientX);
   timelineDragging = false;
   sliderWrap.releasePointerCapture?.(e.pointerId);
-  // Switch to eased transition on release
-  updateTimelinePosition(false);
-  // Decay skew back to 0
-  if (skewRaf) cancelAnimationFrame(skewRaf);
-  skewRaf = requestAnimationFrame(decaySkew);
+  startDialAnim();
 });
 sliderWrap.addEventListener('pointercancel', () => {
   timelineDragging = false;
+  startDialAnim();
 });
 window.addEventListener('resize', updateTimelinePosition);
 pollutionDisplay.style.setProperty('--band-color', currentStyle.fg);
@@ -2134,9 +2123,8 @@ async function init() {
       <div style="color:rgba(255,255,255,0.7); margin-bottom:12px;">${err.message}</div>
       <div style="font-size:11px; line-height:2;">
         <b style="color:rgba(255,255,255,0.5)">Please check:</b><br>
-        1. The 3D asset files could not be loaded from the CDN.
-        2. Check your network connection and try refreshing.
-        3. If the issue persists, the asset server may be temporarily unavailable.
+        1. Check your network connection and try refreshing.<br>
+        2. If the issue persists, the 3D asset server may be temporarily unavailable.
       </div>
     `;
   }
