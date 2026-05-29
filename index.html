@@ -462,7 +462,7 @@ renderer.setClearColor(0x000000);
 
 const scene = new THREE.Scene();
 const rootGroup = new THREE.Group();
-rootGroup.rotation.x = 4.5 * (Math.PI / 180);
+rootGroup.rotation.x = 5 * (Math.PI / 180);
 scene.add(rootGroup);
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 100);
 camera.position.set(0, 0.5, 3);
@@ -580,16 +580,23 @@ canvas.addEventListener('wheel', e => {
 }, { passive: false });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
+let lastPinchMidpoint = null;
+
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
   markInteraction();
   if (e.touches.length === 1) {
     activeTouchMode = 'rotate';
     lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    lastPinchMidpoint = null;
   } else if (e.touches.length >= 2) {
     activeTouchMode = 'pinch';
     pinchStartDistance = getTouchDistance(e.touches);
     pinchStartRadius = orbit.radius;
+    lastPinchMidpoint = {
+      x: (e.touches[0].clientX + e.touches[1].clientX) * 0.5,
+      y: (e.touches[0].clientY + e.touches[1].clientY) * 0.5,
+    };
   }
 }, { passive: false });
 
@@ -602,9 +609,21 @@ canvas.addEventListener('touchmove', e => {
     rotateOrbit(dx, dy, 0.006);
     lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   } else if (e.touches.length >= 2) {
+    // 핀치 줌
     const dist = getTouchDistance(e.touches);
     const scale = dist / Math.max(1, pinchStartDistance);
     orbit.radius = clamp(pinchStartRadius / scale, 0.55, 10);
+    // 두 손가락 pan
+    const midX = (e.touches[0].clientX + e.touches[1].clientX) * 0.5;
+    const midY = (e.touches[0].clientY + e.touches[1].clientY) * 0.5;
+    if (lastPinchMidpoint) {
+      const dx = midX - lastPinchMidpoint.x;
+      const dy = midY - lastPinchMidpoint.y;
+      const panSpeed = orbit.radius * 0.0012;
+      orbit.target.x -= dx * panSpeed;
+      orbit.target.y += dy * panSpeed;
+    }
+    lastPinchMidpoint = { x: midX, y: midY };
   }
 }, { passive: false });
 
@@ -614,23 +633,27 @@ canvas.addEventListener('touchend', e => {
   if (e.touches.length === 0) {
     activeTouchMode = 'none';
     lastTouch = null;
+    lastPinchMidpoint = null;
   } else if (e.touches.length === 1) {
     activeTouchMode = 'rotate';
     lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    lastPinchMidpoint = null;
   }
 }, { passive: false });
 
 function updateCamera() {
+  // orbit.target은 rootGroup 로컬 좌표 — 월드 좌표로 변환
+  const worldTarget = orbit.target.clone().applyEuler(rootGroup.rotation);
   camera.up.set(0, 1, 0);
   camera.position.set(
-    orbit.target.x + orbit.radius * Math.sin(orbit.phi) * Math.sin(orbit.theta),
-    orbit.target.y + orbit.radius * Math.cos(orbit.phi) + CAMERA_Y_OFFSET,
-    orbit.target.z + orbit.radius * Math.sin(orbit.phi) * Math.cos(orbit.theta)
+    worldTarget.x + orbit.radius * Math.sin(orbit.phi) * Math.sin(orbit.theta),
+    worldTarget.y + orbit.radius * Math.cos(orbit.phi) + CAMERA_Y_OFFSET,
+    worldTarget.z + orbit.radius * Math.sin(orbit.phi) * Math.cos(orbit.theta)
   );
   camera.lookAt(
-    orbit.target.x,
-    orbit.target.y + CAMERA_LOOK_AT_Y_OFFSET,
-    orbit.target.z
+    worldTarget.x,
+    worldTarget.y + CAMERA_LOOK_AT_Y_OFFSET,
+    worldTarget.z
   );
 }
 
@@ -1788,7 +1811,7 @@ let dragVelocity = 0;
 function dialAnimLoop() {
   if (!dialBars) return;
   // Lerp offset: fast during drag, smooth on release
-  const speed = timelineDragging ? 0.9 : 0.85;
+  const speed = timelineDragging ? 0.85 : 0.80;
   dialCurrentOffset += (dialTargetOffset - dialCurrentOffset) * speed;
 
   // Skew: proportional to velocity, decays when not dragging
