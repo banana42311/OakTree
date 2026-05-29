@@ -1753,7 +1753,7 @@ let timelineStartIndex = 0;
 let timelineMoved = false;
 function getTimelineStep() {
   const width = sliderWrap.getBoundingClientRect().width || window.innerWidth;
-  return clamp(width / 9.8, 32, 44);
+  return clamp(width / 7.0, 32, 44);
 }
 function setDateFromTimelineDrag(clientX) {
   if (!airQualityDays.length) return;
@@ -1785,7 +1785,7 @@ let dragVelocity = 0;
 function dialAnimLoop() {
   if (!dialBars) return;
   // Lerp offset: fast during drag, smooth on release
-  const speed = timelineDragging ? 0.55 : 0.12;
+  const speed = timelineDragging ? 0.85 : 0.80;
   dialCurrentOffset += (dialTargetOffset - dialCurrentOffset) * speed;
 
   // Skew: proportional to velocity, decays when not dragging
