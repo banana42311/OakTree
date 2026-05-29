@@ -461,6 +461,9 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x000000);
 
 const scene = new THREE.Scene();
+const rootGroup = new THREE.Group();
+rootGroup.rotation.x = 4.5 * (Math.PI / 180);
+scene.add(rootGroup);
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 100);
 camera.position.set(0, 0.5, 3);
 
@@ -1785,7 +1788,7 @@ let dragVelocity = 0;
 function dialAnimLoop() {
   if (!dialBars) return;
   // Lerp offset: fast during drag, smooth on release
-  const speed = timelineDragging ? 0.85 : 0.80;
+  const speed = timelineDragging ? 0.9 : 0.85;
   dialCurrentOffset += (dialTargetOffset - dialCurrentOffset) * speed;
 
   // Skew: proportional to velocity, decays when not dragging
@@ -1895,7 +1898,7 @@ async function init() {
     });
 
     const points = new THREE.Points(geo, splatMaterial);
-    scene.add(points);
+    rootGroup.add(points);
 
     // ── 이파리 PLY 별도 로드 ──
     try {
@@ -2036,7 +2039,7 @@ async function init() {
       });
 
       const leavesPoints = new THREE.Points(lGeo, leavesMaterial);
-      scene.add(leavesPoints);
+      rootGroup.add(leavesPoints);
       console.log('Leaves loaded');
     } catch(e) {
       console.log('Leaves file not found; skipping:', e.message);
@@ -2077,7 +2080,7 @@ async function init() {
 
       const grassPoints = new THREE.Points(gGeo, grassMaterial);
       grassPoints.renderOrder = -1;
-      scene.add(grassPoints);
+      rootGroup.add(grassPoints);
       console.log('Grass loaded');
     } catch(e) {
       console.log('Grass file not found; skipping:', e.message);
@@ -2105,9 +2108,9 @@ async function init() {
 
     // 기둥 빛 흐름 레이어 — 뷰어와 동일한 좌표 변환 적용
     trunkFlow = createTrunkFlow(centerX, centerY, centerZ, scale);
-    scene.add(trunkFlow.mesh);
+    rootGroup.add(trunkFlow.mesh);
     sphereParticles = createSphereParticles();
-    scene.add(sphereParticles.mesh);
+    rootGroup.add(sphereParticles.mesh);
 
     // 로딩 숨기기
     loadingEl.style.opacity = '0';
