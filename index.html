@@ -1586,7 +1586,7 @@ function createSphereParticles() {
       const b = radialBright * flicker * (1.35 + p.attach * 0.65);
 
       // 브랜치와 동일한 aqiToRGB 기반 색 + 채도 조절
-      const aqi = p.pmType === 0 ? globalPM25AQI : globalPM10AQI;
+      const aqi = globalPM25AQI; // 단일 DAQI 기준
       const [rc, gc, bc] = aqiToRGB(aqi);
       const grayP = (rc + gc + bc) / 3;
       const satP = 0.5; // 채도 조절
@@ -1667,8 +1667,8 @@ function applyAQI(aqi, record = null) {
   globalPM25AQI = aqi;
   globalPM10AQI = aqi;
   if (record) {
-    globalPM25AQI = record.pm25AQI;
-    globalPM10AQI = record.pm10AQI;
+    globalPM25AQI = record.aqi;
+    globalPM10AQI = record.aqi;
   }
   // 미래 데이터면 Particulate Matter, 과거/현재면 Daily Air Quality Index (DAQI)
   if (bandingTitle) {
