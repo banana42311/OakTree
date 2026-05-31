@@ -382,7 +382,7 @@
 
 <!-- Air Pollution banding — 좌상단 -->
 <div id="pollution-display">
-  <span id="banding-title">Air Pollution banding</span>
+  <span id="banding-title">Daily Air Quality Index (DAQI)</span>
   <div id="banding-value">
     <span id="banding-name">Low</span>
     <span id="banding-number">1</span>
@@ -609,19 +609,20 @@ canvas.addEventListener('touchmove', e => {
     rotateOrbit(dx, dy, 0.006);
     lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   } else if (e.touches.length >= 2) {
-    // 핀치 줌
     const dist = getTouchDistance(e.touches);
     const scale = dist / Math.max(1, pinchStartDistance);
     orbit.radius = clamp(pinchStartRadius / scale, 0.55, 10);
-    // 두 손가락 pan
     const midX = (e.touches[0].clientX + e.touches[1].clientX) * 0.5;
     const midY = (e.touches[0].clientY + e.touches[1].clientY) * 0.5;
     if (lastPinchMidpoint) {
       const dx = midX - lastPinchMidpoint.x;
       const dy = midY - lastPinchMidpoint.y;
       const panSpeed = orbit.radius * 0.0012;
-      orbit.target.x -= dx * panSpeed;
-      orbit.target.y += dy * panSpeed;
+      const right = new THREE.Vector3();
+      const up    = new THREE.Vector3();
+      camera.matrix.extractBasis(right, up, new THREE.Vector3());
+      orbit.target.addScaledVector(right, -dx * panSpeed);
+      orbit.target.addScaledVector(up,    dy * panSpeed);
     }
     lastPinchMidpoint = { x: midX, y: midY };
   }
@@ -642,18 +643,16 @@ canvas.addEventListener('touchend', e => {
 }, { passive: false });
 
 function updateCamera() {
-  // orbit.target은 rootGroup 로컬 좌표 — 월드 좌표로 변환
-  const worldTarget = orbit.target.clone().applyEuler(rootGroup.rotation);
   camera.up.set(0, 1, 0);
   camera.position.set(
-    worldTarget.x + orbit.radius * Math.sin(orbit.phi) * Math.sin(orbit.theta),
-    worldTarget.y + orbit.radius * Math.cos(orbit.phi) + CAMERA_Y_OFFSET,
-    worldTarget.z + orbit.radius * Math.sin(orbit.phi) * Math.cos(orbit.theta)
+    orbit.target.x + orbit.radius * Math.sin(orbit.phi) * Math.sin(orbit.theta),
+    orbit.target.y + orbit.radius * Math.cos(orbit.phi) + CAMERA_Y_OFFSET,
+    orbit.target.z + orbit.radius * Math.sin(orbit.phi) * Math.cos(orbit.theta)
   );
   camera.lookAt(
-    worldTarget.x,
-    worldTarget.y + CAMERA_LOOK_AT_Y_OFFSET,
-    worldTarget.z
+    orbit.target.x,
+    orbit.target.y + CAMERA_LOOK_AT_Y_OFFSET,
+    orbit.target.z
   );
 }
 
@@ -1608,17 +1607,17 @@ const ASSET_BASE = IS_LOCAL
   ? '.'
   : 'https://pub-69ed5536056046b686d3e07c38041470.r2.dev';
 
-const PLY_FILE = `${ASSET_BASE}/tree_scan2.ply`;
-const LEAVES_FILE = `${ASSET_BASE}/leaves_only1.ply`;
-const GRASS_FILE = `${ASSET_BASE}/grass.ply`;
+const PLY_FILE    = `${ASSET_BASE}/tree_scan2.ply`;
+const LEAVES_FILE = `${ASSET_BASE}/leaves_only.ply`;
 
 const loadingEl   = document.getElementById('loading');
 const loadingBar  = document.getElementById('loading-bar');
 const loadingText = document.getElementById('loading-text');
 const errorEl     = document.getElementById('error-msg');
 const pollutionDisplay = document.getElementById('pollution-display');
-const bandingName = document.getElementById('banding-name');
+const bandingName   = document.getElementById('banding-name');
 const bandingNumber = document.getElementById('banding-number');
+const bandingTitle  = document.getElementById('banding-title');
 const scenarioToggle = document.getElementById('scenario-toggle');
 const scenarioLabel = document.getElementById('scenario-label');
 const dateSlider  = document.getElementById('dateSlider');
@@ -1643,7 +1642,7 @@ const FUTURE_WORST_VALUE = Math.max(...FUTURE_SCENARIOS.bad.series.map(([, value
 
 let splatMaterial = null;
 let leavesMaterial = null;
-let grassMaterial = null;
+
 let particleSystem = null;
 let trunkFlow = null;
 let sphereParticles = null;
@@ -1670,6 +1669,12 @@ function applyAQI(aqi, record = null) {
   if (record) {
     globalPM25AQI = record.pm25AQI;
     globalPM10AQI = record.pm10AQI;
+  }
+  // 미래 데이터면 Particulate Matter, 과거/현재면 Daily Air Quality Index (DAQI)
+  if (bandingTitle) {
+    bandingTitle.textContent = (record?.type === 'future')
+      ? 'Particulate Matter'
+      : 'Daily Air Quality Index (DAQI)';
   }
 }
 
@@ -1860,9 +1865,14 @@ aqiPanel.style.setProperty('--band-color', currentStyle.fg);
 async function init() {
   try {
     loadingText.textContent = 'LOADING SCENE';
-    const buffer = await loadPLY(PLY_FILE, p => {
-      loadingBar.style.width = Math.round(p * 100) + '%';
-    });
+
+    // tree_scan2 와 leaves 를 동시에 병렬 로드
+    const [buffer, leavesBuffer] = await Promise.all([
+      loadPLY(PLY_FILE, p => {
+        loadingBar.style.width = Math.round(p * 100) + '%';
+      }),
+      loadPLY(LEAVES_FILE, () => {}),
+    ]);
 
     loadingText.textContent = 'BUILDING SPLATS';
     loadingBar.style.width = '100%';
@@ -1923,9 +1933,8 @@ async function init() {
     const points = new THREE.Points(geo, splatMaterial);
     rootGroup.add(points);
 
-    // ── 이파리 PLY 별도 로드 ──
+    // ── 이파리 PLY 처리 (이미 병렬로 받아둔 버퍼 사용) ──
     try {
-      const leavesBuffer = await loadPLY(LEAVES_FILE, () => {});
       const leavesHeader = parsePLYHeader(leavesBuffer);
       const { positions: lPos, colors: lCol, sizes: lSiz, opacities: lOpa } = buildSplatGeometry(leavesBuffer, leavesHeader);
 
@@ -2068,47 +2077,6 @@ async function init() {
       console.log('Leaves file not found; skipping:', e.message);
     }
 
-    // ── 바닥 잔디 PLY 별도 로드 ──
-    try {
-      const grassBuffer = await loadPLY(GRASS_FILE, () => {});
-      const grassHeader = parsePLYHeader(grassBuffer);
-      const { positions: gPos, colors: gCol, sizes: gSiz, opacities: gOpa } = buildSplatGeometry(grassBuffer, grassHeader);
-
-      // 잔디도 tree_scan2와 같은 좌표계로 정규화
-      for (let i = 0; i < gPos.length; i += 3) {
-        gPos[i]   = (gPos[i]   - centerX) * scale;
-        gPos[i+1] = -(gPos[i+1] - centerY) * scale;
-        gPos[i+2] = (gPos[i+2] - centerZ) * scale;
-      }
-
-      const gGeo = new THREE.BufferGeometry();
-      gGeo.setAttribute('position', new THREE.BufferAttribute(gPos, 3));
-      gGeo.setAttribute('aColor',   new THREE.BufferAttribute(gCol, 3));
-      gGeo.setAttribute('aSize',    new THREE.BufferAttribute(gSiz, 1));
-      gGeo.setAttribute('aOpacity', new THREE.BufferAttribute(gOpa, 1));
-
-      grassMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-          uHueShift:  { value: 0.0 },
-          uSatMul:    { value: 1.0 },
-          uBrightMul: { value: 1.0 },
-          uPointScale:{ value: 1.0 },
-        },
-        vertexShader: staticColorShiftVertexShader,
-        fragmentShader,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.NormalBlending,
-      });
-
-      const grassPoints = new THREE.Points(gGeo, grassMaterial);
-      grassPoints.renderOrder = -1;
-      rootGroup.add(grassPoints);
-      console.log('Grass loaded');
-    } catch(e) {
-      console.log('Grass file not found; skipping:', e.message);
-    }
-
     // 브랜치 대표점 계산 → 셰이더 uniform에 설정
     const branchCenters = BRANCH_DATA.map(br => {
       const mid = br.points[Math.floor(br.points.length * 0.5)];
@@ -2211,11 +2179,10 @@ function animate() {
     u.uBreathSpeed.value = currentStyle.breathSpeed;
     u.uPulseSize.value   = currentStyle.pulseSize;
     u.uCrackOpen.value   = currentStyle.crackOpen;
-    // 나무 원본은 색 변화 없이 항상 고정
-    u.uHueShift.value    = 0;
-    u.uSatMul.value      = 1.0;
+    u.uHueShift.value    = currentStyle.hueShift;
+    u.uSatMul.value      = currentStyle.satMul;
     u.uTreeSatMul.value  = currentStyle.treeSatMul;
-    u.uBrightMul.value   = 1.4;
+    u.uBrightMul.value   = currentStyle.brightMul;
   }
 
   // 이파리 호흡 업데이트 — AQI가 낮을수록 크게 호흡하고, 높을수록 수축
@@ -2231,12 +2198,7 @@ function animate() {
   }
 
   // 바닥 잔디 업데이트 — 움직임 없이 AQI 색/채도/밝기만 반응
-  if (grassMaterial) {
-    const u = grassMaterial.uniforms;
-    u.uHueShift.value  = currentStyle.hueShift;
-    u.uSatMul.value    = currentStyle.satMul;
-    u.uBrightMul.value = currentStyle.brightMul;
-  }
+
 
   // 배경색
   const fogC = currentStyle.fogDensity;
@@ -2296,93 +2258,99 @@ function pm10ToDAQI(v) {
   if (v <= 83) return 7; if (v <= 91) return 8; if (v <= 100) return 9;
   return 10;
 }
-
-// ── Open-Meteo: 14일 히스토리 베이스 ──────────────────────
+function no2ToDAQI(v) {
+  if (v <= 67)  return 1; if (v <= 134) return 2; if (v <= 200) return 3;
+  if (v <= 267) return 4; if (v <= 334) return 5; if (v <= 400) return 6;
+  if (v <= 467) return 7; if (v <= 534) return 8; if (v <= 600) return 9;
+  return 10;
+}
+function o3ToDAQI(v) {
+  if (v <= 33)  return 1; if (v <= 66)  return 2; if (v <= 100) return 3;
+  if (v <= 120) return 4; if (v <= 140) return 5; if (v <= 160) return 6;
+  if (v <= 187) return 7; if (v <= 213) return 8; if (v <= 240) return 9;
+  return 10;
+}
+function worstDaqiFromHourly(data, dateKey, todayOnly) {
+  const times = data.hourly?.time              || [];
+  const pm25v  = data.hourly?.pm2_5            || [];
+  const pm10v  = data.hourly?.pm10             || [];
+  const no2v   = data.hourly?.nitrogen_dioxide || [];
+  const o3v    = data.hourly?.ozone            || [];
+  const nowHour = new Date().toISOString().slice(0, 13);
+  let worst = 0;
+  for (let i = 0; i < times.length; i++) {
+    if (!times[i].startsWith(dateKey)) continue;
+    if (todayOnly && times[i].slice(0, 13) > nowHour) continue;
+    if (!Number.isFinite(pm25v[i]) || !Number.isFinite(pm10v[i])) continue;
+    const daqi = Math.max(
+      pm25ToDAQI(pm25v[i]), pm10ToDAQI(pm10v[i]),
+      no2ToDAQI(Number.isFinite(no2v[i]) ? no2v[i] : 0),
+      o3ToDAQI(Number.isFinite(o3v[i])   ? o3v[i]  : 0)
+    );
+    if (daqi > worst) worst = daqi;
+  }
+  return worst || 1;
+}
 function getHourlyValue(data, dateKey, todayOnly) {
   const times = data.hourly?.time || [];
   const pm25v  = data.hourly?.pm2_5 || [];
   const pm10v  = data.hourly?.pm10  || [];
-  if (todayOnly) {
-    // 현재 시각에 가장 가까운 과거 시간값 한 개
-    const nowHour = new Date().toISOString().slice(0, 13);
-    let best = -1;
-    for (let i = 0; i < times.length; i++) {
-      if (!times[i].startsWith(dateKey)) continue;
-      if (times[i].slice(0, 13) <= nowHour) best = i;
-    }
-    if (best < 0) return null;
-    const p25 = pm25v[best], p10 = pm10v[best];
-    if (!Number.isFinite(p25) || !Number.isFinite(p10)) return null;
-    return { pm25: p25, pm10: p10, count: 1 };
-  }
-  // 과거 날짜: 그날 중 가장 나쁜 시간값 (최대 DAQI 기준)
+  const nowHour = new Date().toISOString().slice(0, 13);
   let worstPM25 = 0, worstPM10 = 0, worstDAQI = 0, n = 0;
   for (let i = 0; i < times.length; i++) {
     if (!times[i].startsWith(dateKey)) continue;
+    if (todayOnly && times[i].slice(0, 13) > nowHour) continue;
     if (!Number.isFinite(pm25v[i]) || !Number.isFinite(pm10v[i])) continue;
     const daqi = Math.max(pm25ToDAQI(pm25v[i]), pm10ToDAQI(pm10v[i]));
-    if (daqi > worstDAQI) {
-      worstDAQI = daqi;
-      worstPM25 = pm25v[i];
-      worstPM10 = pm10v[i];
-    }
+    if (daqi > worstDAQI) { worstDAQI = daqi; worstPM25 = pm25v[i]; worstPM10 = pm10v[i]; }
     n++;
   }
   return n ? { pm25: worstPM25, pm10: worstPM10, count: n } : null;
 }
-
 async function fetchOpenMeteo() {
-  const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=51.4569&longitude=-0.0160&hourly=pm2_5,pm10&past_days=13&forecast_days=1&timezone=Europe%2FLondon';
+  const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=51.4613&longitude=-0.0139&hourly=pm2_5,pm10,nitrogen_dioxide,ozone&past_days=13&forecast_days=1&timezone=Europe%2FLondon';
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
   return res.json();
 }
-
-// ── LAQN: 오늘 실시간 DAQI (Hourly 엔드포인트, 날짜 파라미터 없음) ──
-async function fetchLAQNHourlyToday(dateKey) {
-  const url = 'https://api.erg.ic.ac.uk/AirQuality/Hourly/MonitoringIndex/GroupName=London/Json';
+async function fetchLAQNDailyToday(dateKey) {
+  const [y, m, d] = dateKey.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateStr = `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+  const url = `https://api.erg.ic.ac.uk/AirQuality/Daily/MonitoringIndex/GroupName=London/Date=${encodeURIComponent(dateStr)}/Json`;
+  console.log('[LAQN Daily] Requesting:', url);
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`LAQN Hourly HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`LAQN Daily HTTP ${res.status}`);
   const data = await res.json();
-
-  const authorities = data?.HourlyAirQualityIndex?.LocalAuthority;
-  if (!authorities) {
-    console.warn('[LAQN] Unexpected response shape:', JSON.stringify(data).slice(0, 200));
-    return null;
-  }
-
+  const authorities = data?.DailyAirQualityIndex?.LocalAuthority;
+  if (!authorities) { console.warn('[LAQN Daily] Unexpected shape'); return null; }
   const authArr = Array.isArray(authorities) ? authorities : [authorities];
-  console.log('[LAQN] Local authority list:', authArr.map(a => a['@LocalAuthorityName']).join(', '));
-
-  const lewisham = authArr.find(a =>
-    a['@LocalAuthorityName']?.toLowerCase().includes('lewisham')
-  );
-  if (!lewisham) return null;
-
-  const sites = lewisham.Site;
-  if (!sites) return null;
-  const siteArr = Array.isArray(sites) ? sites : [sites];
-
-  let aqi = 0, pm25 = 0, pm10 = 0;
-  for (const s of siteArr) {
-    const i = parseInt(s['@AirQualityIndex']) || 0;
-    if (i > aqi) aqi = i;
-    const sp = s.Species;
-    if (sp) {
-      for (const x of (Array.isArray(sp) ? sp : [sp])) {
-        const c = x['@SpeciesCode']?.toUpperCase();
-        const v = parseInt(x['@AirQualityIndex']) || 0;
-        if (c === 'PM25' && v > pm25) pm25 = v;
-        if (c === 'PM10' && v > pm10) pm10 = v;
-      }
+  const withSites = authArr.filter(a => a.Site).map(a => a['@LocalAuthorityName']);
+  console.log('[LAQN Daily] Authorities with sites:', withSites.join(', ') || 'NONE');
+  const priority = ['lewisham','southwark','greenwich','lambeth','bromley','city of london','tower hamlets','wandsworth'];
+  for (const name of priority) {
+    const auth = authArr.find(a => a['@LocalAuthorityName']?.toLowerCase().includes(name));
+    if (!auth?.Site) continue;
+    const siteArr = Array.isArray(auth.Site) ? auth.Site : [auth.Site];
+    let aqi = 0;
+    for (const s of siteArr) { const i = parseInt(s['@AirQualityIndex']) || 0; if (i > aqi) aqi = i; }
+    if (!aqi) continue;
+    console.log(`[LAQN Daily] DAQI: ${aqi} (source: ${auth['@LocalAuthorityName']})`);
+    return { dateKey, aqi, pm25AQI: aqi, pm10AQI: aqi, unavailable: false, sampleCount: siteArr.length };
+  }
+  let bestAqi = 0, bestAuth = '';
+  for (const auth of authArr) {
+    if (!auth.Site) continue;
+    const siteArr = Array.isArray(auth.Site) ? auth.Site : [auth.Site];
+    for (const s of siteArr) {
+      const i = parseInt(s['@AirQualityIndex']) || 0;
+      if (i > bestAqi) { bestAqi = i; bestAuth = auth['@LocalAuthorityName']; }
     }
   }
-  if (!aqi) return null;
-  console.log(`[LAQN] Lewisham DAQI: ${aqi} (PM2.5:${pm25||aqi} PM10:${pm10||aqi})`);
-  return { dateKey, aqi, pm25AQI: pm25||aqi, pm10AQI: pm10||aqi, unavailable: false, sampleCount: siteArr.length };
+  if (!bestAqi) { console.warn('[LAQN Daily] No data from any authority'); return null; }
+  console.log(`[LAQN Daily] DAQI: ${bestAqi} (source: ${bestAuth})`);
+  return { dateKey, aqi: bestAqi, pm25AQI: bestAqi, pm10AQI: bestAqi, unavailable: false, sampleCount: 1 };
 }
-
-// ── 타임라인 조립 ─────────────────────────────────────────
 function buildFallbackRecord(dateKey) {
   return { dateKey, aqi: 1, pm25AQI: 1, pm10AQI: 1, unavailable: true, sampleCount: 0 };
 }
@@ -2390,34 +2358,26 @@ function buildFallbackTimeline() {
   const today = getLondonDateKey();
   return Array.from({ length: 14 }, (_, i) => buildFallbackRecord(shiftDateKey(today, i - 13)));
 }
-
 async function fetchAirQualityTimeline() {
   const todayKey = getLondonDateKey();
   const dates = Array.from({ length: 14 }, (_, i) => shiftDateKey(todayKey, i - 13));
-
-  // Open-Meteo (히스토리) + LAQN Hourly (오늘 실측) 병렬 요청
   const [omResult, laqnResult] = await Promise.allSettled([
     fetchOpenMeteo(),
-    fetchLAQNHourlyToday(todayKey),
+    fetchLAQNDailyToday(todayKey),
   ]);
-
-  const omData    = omResult.status    === 'fulfilled' ? omResult.value    : null;
-  const todayLAQN = laqnResult.status  === 'fulfilled' ? laqnResult.value  : null;
-
+  const omData    = omResult.status  === 'fulfilled' ? omResult.value  : null;
+  const todayLAQN = laqnResult.status === 'fulfilled' ? laqnResult.value : null;
   if (!omData)    console.warn('[Open-Meteo] Failed:', omResult.reason?.message);
-  if (!todayLAQN) console.warn('[LAQN] No live reading for today; using nearest Open-Meteo value.');
-
+  if (!todayLAQN) console.warn('[LAQN Daily] No reading; using Open-Meteo fallback.');
   return dates.map((dateKey, i) => {
     const isToday = i === dates.length - 1;
-
     if (isToday && todayLAQN) return todayLAQN;
-
     if (omData) {
+      const worst = worstDaqiFromHourly(omData, dateKey, isToday);
       const h = getHourlyValue(omData, dateKey, isToday);
-      if (h) {
-        const p25 = pm25ToDAQI(h.pm25), p10 = pm10ToDAQI(h.pm10);
-        return { dateKey, aqi: Math.max(p25, p10), pm25AQI: p25, pm10AQI: p10, unavailable: false, sampleCount: h.count };
-      }
+      const p25 = h ? pm25ToDAQI(h.pm25) : 1;
+      const p10 = h ? pm10ToDAQI(h.pm10) : 1;
+      return { dateKey, aqi: worst, pm25AQI: p25, pm10AQI: p10, unavailable: false, sampleCount: h?.count || 0 };
     }
     return buildFallbackRecord(dateKey);
   });
