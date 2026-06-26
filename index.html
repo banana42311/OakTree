@@ -410,15 +410,17 @@
   #slider-wrap::after {
     content: '';
     position: absolute;
-    left: -86%;
+    left: -112%;
     top: 12px;
-    width: 86%;
+    width: 112%;
     height: 46px;
     background: linear-gradient(90deg,
       rgba(255,255,255,0),
-      rgba(255,255,255,0.010) 28%,
-      rgba(255,255,255,0.20) 50%,
-      rgba(255,255,255,0.010) 72%,
+      rgba(255,255,255,0.025) 18%,
+      rgba(255,255,255,0.14) 38%,
+      rgba(255,255,255,0.26) 50%,
+      rgba(255,255,255,0.14) 62%,
+      rgba(255,255,255,0.025) 82%,
       rgba(255,255,255,0)
     );
     filter: blur(0.2px);
@@ -514,18 +516,18 @@
       transform: translateX(-12%) skewX(-18deg);
     }
     30% {
-      opacity: 0.10;
+      opacity: 0.22;
     }
     66% {
-      opacity: 0.14;
-      transform: translateX(218%) skewX(-18deg);
+      opacity: 0.30;
+      transform: translateX(190%) skewX(-18deg);
     }
     84% {
-      opacity: 0.06;
+      opacity: 0.16;
     }
     100% {
       opacity: 0;
-      transform: translateX(238%) skewX(-18deg);
+      transform: translateX(220%) skewX(-18deg);
     }
   }
 
@@ -2186,11 +2188,13 @@ async function init() {
   try {
     loadingText.textContent = 'LOADING SCENE';
 
-    // Start leaves in parallel, but do not block the first visible tree render on it.
-    const leavesLoadPromise = loadPLY(LEAVES_FILE, () => {});
-    const buffer = await loadPLY(PLY_FILE, p => {
-      loadingBar.style.width = Math.round(p * 100) + '%';
-    });
+    // Load the trunk/base scan and leaves together so the first visible render is complete.
+    const [buffer, leavesBuffer] = await Promise.all([
+      loadPLY(PLY_FILE, p => {
+        loadingBar.style.width = Math.round(p * 100) + '%';
+      }),
+      loadPLY(LEAVES_FILE, () => null).catch(() => null),
+    ]);
 
     loadingText.textContent = 'BUILDING SPLATS';
     loadingBar.style.width = '100%';
@@ -2253,16 +2257,10 @@ async function init() {
     rootGroup.add(points);
 
     loadingText.textContent = 'RENDERING TREE';
-    loadingEl.style.opacity = '0';
-    setTimeout(() => {
-      loadingEl.style.display = 'none';
-    }, 800);
-    animate();
 
-    const loadDetailLayers = async () => {
-    // ── 이파리 PLY 처리 (초기 나무 렌더 이후에 추가) ──
+    // ── 이파리 PLY 처리 ──
     try {
-      const leavesBuffer = await leavesLoadPromise;
+      if (!leavesBuffer) throw new Error('leaves_only asset unavailable');
       const leavesHeader = parsePLYHeader(leavesBuffer);
       const { positions: lPos, colors: lCol, sizes: lSiz, opacities: lOpa } = buildSplatGeometry(leavesBuffer, leavesHeader);
 
@@ -2432,13 +2430,11 @@ async function init() {
     sphereParticles = createSphereParticles();
     rootGroup.add(sphereParticles.mesh);
 
-    };
-
-    // Keep the first visible render responsive; add heavier detail layers after the intro settles.
-    const scheduleDetailLoad = (callback) => setTimeout(callback, 3200);
-    scheduleDetailLoad(() => {
-      loadDetailLayers().catch(error => console.warn('Detail layers failed:', error));
-    });
+    loadingEl.style.opacity = '0';
+    setTimeout(() => {
+      loadingEl.style.display = 'none';
+    }, 800);
+    animate();
 
   } catch (err) {
     loadingEl.style.display = 'none';
