@@ -46,8 +46,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     gap: 20px;
+    padding: 0 24px max(44px, calc(env(safe-area-inset-bottom) + 34px));
     z-index: 200;
     transition: opacity 0.8s;
   }
@@ -98,6 +99,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
+    max-width: calc(100vw - 210px);
     color: rgba(255,255,255,0.88);
     text-shadow: 0 2px 18px rgba(0,0,0,0.85);
     --band-color: #4ade80;
@@ -108,6 +110,7 @@
     letter-spacing: 0.18em;
     color: rgba(255,255,255,0.35);
     text-transform: uppercase;
+    line-height: 1.35;
   }
   #banding-value {
     display: flex;
@@ -197,64 +200,66 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 8px;
-    margin-top: 3px;
+    gap: 9px;
+    margin-top: 8px;
   }
   .info-button {
-    width: 30px;
-    height: 30px;
+    width: 31px;
+    height: 31px;
     border: 0;
     border-radius: 999px;
-    background: rgba(0,0,0,0.24);
-    color: rgba(235,236,229,0.72);
+    background: rgba(0,0,0,0.16);
+    color: rgba(210,212,206,0.72);
     font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0;
+    font-size: 12px;
+    line-height: 1;
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15), 0 8px 18px rgba(0,0,0,0.22);
+    box-shadow: inset 0 0 0 1px rgba(210,212,206,0.24), 0 8px 22px rgba(0,0,0,0.24);
     cursor: pointer;
     touch-action: manipulation;
-    transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
   }
   .info-button:active {
     transform: scale(0.94);
-    color: rgba(255,255,255,0.94);
-    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.88);
+    box-shadow: inset 0 0 0 1px rgba(210,212,206,0.42), 0 4px 18px rgba(0,0,0,0.26);
   }
 
-  /* ── Information stack ─────────────────────────────────── */
+  /* ── Information stack ── */
   #info-overlay {
     position: fixed;
     inset: 0;
-    z-index: 190;
+    z-index: 260;
     display: none;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: max(26px, env(safe-area-inset-top)) 24px max(112px, env(safe-area-inset-bottom));
     background: rgba(0,0,0,0.08);
     opacity: 0;
-    transition: opacity 0.28s ease;
-    pointer-events: none;
+    transition: opacity 0.24s ease;
+    touch-action: pan-y;
   }
   #info-overlay.is-open {
     display: flex;
     opacity: 1;
-    pointer-events: auto;
   }
   #info-stack {
     position: relative;
-    width: min(340px, calc(100vw - 58px));
-    min-height: 332px;
+    width: min(330px, calc(100vw - 48px));
+    max-height: min(62svh, 560px);
+    border-radius: 27px;
     overflow: hidden;
-    border-radius: 23px;
-    background: rgba(58,58,52,0.58);
-    color: rgba(255,255,255,0.92);
-    -webkit-backdrop-filter: blur(18px) saturate(1.2);
-    backdrop-filter: blur(18px) saturate(1.2);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16), 0 24px 80px rgba(0,0,0,0.38);
-    transform: translateY(10px) scale(0.985);
-    transition: transform 0.28s ease;
+    background:
+      linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)),
+      rgba(54,55,49,0.58);
+    -webkit-backdrop-filter: blur(20px) saturate(0.9);
+    backdrop-filter: blur(20px) saturate(0.9);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.15),
+      0 18px 60px rgba(0,0,0,0.46);
+    color: rgba(255,255,255,0.9);
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
     touch-action: pan-y;
   }
   #info-overlay.is-open #info-stack {
@@ -262,76 +267,73 @@
   }
   #info-close {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 3;
+    top: 14px;
+    right: 14px;
     width: 30px;
     height: 30px;
     border: 0;
     border-radius: 999px;
-    background: rgba(0,0,0,0.22);
-    color: rgba(255,255,255,0.74);
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.78);
     font-family: 'DM Mono', monospace;
-    font-size: 14px;
+    font-size: 13px;
+    z-index: 2;
     cursor: pointer;
+    touch-action: manipulation;
   }
-  #info-track {
-    display: flex;
-    width: 100%;
-    transform: translateX(calc(var(--info-index, 0) * -100%));
-    transition: transform 0.32s cubic-bezier(0.2, 0.9, 0.22, 1);
+  #info-scroll {
+    max-height: inherit;
+    overflow-y: auto;
+    padding: 58px 20px 24px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
-  .info-card {
-    flex: 0 0 100%;
-    min-height: 332px;
-    padding: 60px 20px 48px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 16px;
+  #info-scroll::-webkit-scrollbar {
+    width: 3px;
   }
-  .info-kicker {
+  #info-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.22);
+    border-radius: 999px;
+  }
+  .info-section + .info-section {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+  }
+  .info-heading {
+    margin-bottom: 14px;
     font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: rgba(255,255,255,0.44);
+    font-size: 11px;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
+    color: rgba(255,255,255,0.56);
   }
   .info-copy {
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 18px;
-    line-height: 1.18;
+    font-size: 16px;
+    line-height: 1.22;
     letter-spacing: 0;
-    color: rgba(255,255,255,0.92);
-    white-space: pre-line;
+    color: rgba(255,255,255,0.9);
   }
-  .info-meta {
+  .info-copy p + p,
+  .info-copy ol + p,
+  .info-copy p + ol {
+    margin-top: 14px;
+  }
+  .info-copy ol {
+    list-style-position: outside;
+    padding-left: 21px;
+  }
+  .info-copy li + li {
+    margin-top: 10px;
+  }
+  .info-scroll-hint {
+    margin-top: 18px;
     font-family: 'DM Mono', monospace;
     font-size: 10px;
-    line-height: 1.5;
-    letter-spacing: 0.08em;
-    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-  }
-  #info-dots {
-    position: absolute;
-    left: 20px;
-    bottom: 19px;
-    display: flex;
-    gap: 7px;
-    z-index: 2;
-  }
-  .info-dot {
-    width: 6px;
-    height: 6px;
-    border: 0;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.26);
-    padding: 0;
-  }
-  .info-dot.is-active {
-    background: rgba(255,255,255,0.86);
-    box-shadow: 0 0 12px rgba(255,255,255,0.32);
+    color: rgba(255,255,255,0.38);
   }
 
   /* ── 날짜 다이얼 — 하단 전체폭 ── */
@@ -340,18 +342,19 @@
     left: 0;
     right: 0;
     bottom: max(4px, env(safe-area-inset-bottom));
-    height: 116px;
+    height: 96px;
     z-index: 100;
     pointer-events: none;
     --dial-offset: 0px;
     --dial-step: 40px;
     --dial-width: 520px;
     --band-color: #4ade80;
+    --timeline-progress: 0%;
   }
   #selected-date-display {
     position: absolute;
     left: 50%;
-    bottom: 4px;
+    bottom: 1px;
     width: min(300px, 82vw);
     transform: translateX(-50%);
     display: flex;
@@ -382,121 +385,75 @@
     position: absolute;
     left: 0;
     right: 0;
-    top: 6px;
-    height: 72px;
+    top: 8px;
+    height: 56px;
     overflow: hidden;
     pointer-events: auto;
     touch-action: none;
-  }
-  @keyframes dialLineTick {
-    0% { filter: brightness(1); }
-    32% { filter: brightness(1.85); }
-    100% { filter: brightness(1); }
-  }
-  @keyframes dialTicksSnap {
-    0% { filter: brightness(1); }
-    32% { filter: brightness(2.05); }
-    100% { filter: brightness(1); }
-  }
-  @keyframes markerSnap {
-    0% { transform: translateX(-50%) scaleY(1); }
-    30% { transform: translateX(-50%) scaleY(1.22); }
-    100% { transform: translateX(-50%) scaleY(1); }
-  }
-  @keyframes markerDotSnap {
-    0% { transform: translate(-50%, -50%) scale(1); }
-    30% { transform: translate(-50%, -50%) scale(1.42); }
-    100% { transform: translate(-50%, -50%) scale(1); }
-  }
-  @keyframes dateSnap {
-    0% { transform: translateX(-50%) translateY(0) scale(1); }
-    30% { transform: translateX(-50%) translateY(-3px) scale(1.045); }
-    100% { transform: translateX(-50%) translateY(0) scale(1); }
   }
   #slider-wrap::before {
     content: '';
     position: absolute;
     left: 0;
     right: 0;
-    top: 42px;
-    height: 2px;
+    top: 34px;
+    height: 1px;
     background: linear-gradient(90deg,
       rgba(255,255,255,0),
-      rgba(255,255,255,0.20) 12%,
-      rgba(255,255,255,0.58) 50%,
-      rgba(255,255,255,0.20) 88%,
+      rgba(255,255,255,0.28) 18%,
+      rgba(255,255,255,0.52) 50%,
+      rgba(255,255,255,0.28) 82%,
       rgba(255,255,255,0)
     );
-    box-shadow: 0 0 24px rgba(255,255,255,0.10);
+    box-shadow: 0 0 20px rgba(255,255,255,0.08);
+  }
+  #slider-wrap::after {
+    content: '';
+    position: absolute;
+    left: -86%;
+    top: 12px;
+    width: 86%;
+    height: 46px;
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0),
+      rgba(255,255,255,0.010) 28%,
+      rgba(255,255,255,0.20) 50%,
+      rgba(255,255,255,0.010) 72%,
+      rgba(255,255,255,0)
+    );
+    filter: blur(0.2px);
+    mix-blend-mode: screen;
+    transform: translateX(-20%) skewX(-18deg);
+    opacity: 0;
+    animation: sliderSheen 14.0s ease-in-out 0.5s infinite both;
+    pointer-events: none;
   }
   #dial-bars {
     position: absolute;
     left: 50%;
-    top: 24px;
+    top: 19px;
     width: var(--dial-width);
     height: 30px;
-    transform: translateX(calc(-50% + var(--dial-offset)));
     background: repeating-linear-gradient(
       to right,
-      rgba(255,255,255,0.26) 0 1px,
+      rgba(255,255,255,0.15) 0 1px,
       transparent 1px var(--dial-step)
     );
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
-    mask-image: linear-gradient(90deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 1%, #000 99%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 1%, #000 99%, transparent 100%);
     pointer-events: none;
     will-change: transform;
-    transition: transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-  #dial-bars.is-dragging {
-    transition: transform 0.04s linear;
-  }
-  #aqi-panel.is-ticking #slider-wrap::before {
-    animation: dialLineTick 170ms cubic-bezier(0.2, 0.9, 0.22, 1);
-  }
-  #aqi-panel.is-ticking #dial-bars {
-    animation: dialTicksSnap 170ms cubic-bezier(0.2, 0.9, 0.22, 1);
-  }
-  #slider-handle {
-    position: absolute;
-    left: 50%;
-    top: 28px;
-    z-index: 2;
-    width: 92px;
-    height: 30px;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 11px;
-    border-radius: 999px;
-    background: rgba(0,0,0,0.26);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15), 0 10px 28px rgba(0,0,0,0.24);
-    pointer-events: none;
-  }
-  .slider-arrow {
-    font-family: 'DM Mono', monospace;
-    font-size: 15px;
-    line-height: 1;
-    color: rgba(255,255,255,0.44);
-  }
-  .slider-grip {
-    width: 18px;
-    height: 6px;
-    border-top: 1px solid rgba(255,255,255,0.44);
-    border-bottom: 1px solid rgba(255,255,255,0.24);
   }
   #timeline-marker {
     position: absolute;
     left: 50%;
-    top: 15px;
+    top: 13px;
     width: 3px;
-    height: 56px;
+    height: 42px;
     transform: translateX(-50%);
     background: rgba(255,255,255,0.58);
     border-radius: 2px;
-    box-shadow: 0 0 18px rgba(255,255,255,0.14);
+    box-shadow: 0 0 18px rgba(255,255,255,0.30);
     pointer-events: none;
     transition: height 0.08s ease, top 0.08s ease, background 0.18s ease;
   }
@@ -504,7 +461,7 @@
     content: '';
     position: absolute;
     left: 50%;
-    top: 28px;
+    top: 21px;
     width: 11px;
     height: 11px;
     transform: translate(-50%, -50%);
@@ -514,17 +471,15 @@
     transition: transform 0.08s ease, background 0.18s ease, box-shadow 0.18s ease;
   }
   #aqi-panel.is-ticking #timeline-marker {
-    top: 11px;
-    height: 64px;
+    top: 10px;
+    height: 48px;
     background: rgba(255,255,255,0.72);
-    animation: markerSnap 170ms cubic-bezier(0.2, 0.9, 0.22, 1);
   }
   #aqi-panel.is-ticking #timeline-marker::after {
-    animation: markerDotSnap 170ms cubic-bezier(0.2, 0.9, 0.22, 1);
-    box-shadow: 0 0 24px color-mix(in srgb, var(--band-color) 72%, transparent);
+    transform: translate(-50%, -50%) scale(1.18);
   }
   #aqi-panel.is-ticking #selected-date-display {
-    animation: dateSnap 170ms cubic-bezier(0.2, 0.9, 0.22, 1);
+    transform: translateX(-50%) translateY(-1px);
   }
   #dateSlider {
     position: absolute;
@@ -532,7 +487,7 @@
     width: 100%;
     -webkit-appearance: none;
     appearance: none;
-    height: 72px;
+    height: 56px;
     background: transparent;
     outline: none;
     cursor: pointer;
@@ -553,6 +508,26 @@
     background: #fff;
     cursor: pointer;
   }
+  @keyframes sliderSheen {
+    0%, 18% {
+      opacity: 0;
+      transform: translateX(-12%) skewX(-18deg);
+    }
+    30% {
+      opacity: 0.10;
+    }
+    66% {
+      opacity: 0.14;
+      transform: translateX(218%) skewX(-18deg);
+    }
+    84% {
+      opacity: 0.06;
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(238%) skewX(-18deg);
+    }
+  }
 
   @media (max-width: 640px) {
     #pollution-display {
@@ -568,19 +543,22 @@
     }
     #aqi-panel {
       bottom: max(4px, env(safe-area-inset-bottom));
-      height: 116px;
+      height: 96px;
     }
     #selected-date-value { font-size: 18px; }
-    #info-stack {
-      width: min(326px, calc(100vw - 48px));
-      min-height: 354px;
+    #info-overlay {
+      padding: max(26px, env(safe-area-inset-top)) 22px max(116px, env(safe-area-inset-bottom));
+      align-items: center;
     }
-    .info-card {
-      min-height: 354px;
-      padding: 58px 18px 46px;
+    #info-stack {
+      width: min(326px, calc(100vw - 44px));
+      max-height: min(59svh, 548px);
+    }
+    #info-scroll {
+      padding: 58px 19px 24px;
     }
     .info-copy {
-      font-size: 17px;
+      font-size: 16px;
     }
   }
 
@@ -602,7 +580,7 @@
 
 <!-- Air Pollution banding — 좌상단 -->
 <div id="pollution-display">
-  <span id="banding-title">Air Pollution banding</span>
+  <span id="banding-title">Daily Air Quality Index (DAQI)</span>
   <div id="banding-value">
     <span id="banding-name">Low</span>
     <span id="banding-number">1</span>
@@ -615,9 +593,8 @@
     <span id="scenario-switch" aria-hidden="true"></span>
   </button>
   <div id="info-dock" aria-label="Information panels">
-    <button class="info-button" type="button" data-info-index="0" aria-label="Open introduction">i</button>
-    <button class="info-button" type="button" data-info-index="1" aria-label="Open how to use">?</button>
-    <button class="info-button" type="button" data-info-index="2" aria-label="Open future data information">D</button>
+    <button class="info-button" type="button" data-info-panel="intro" aria-label="Open introduction">i</button>
+    <button class="info-button" type="button" data-info-panel="guide" aria-label="Open how to use and future data">?</button>
   </div>
 </div>
 
@@ -625,11 +602,6 @@
 <div id="aqi-panel">
   <div id="slider-wrap">
     <div id="dial-bars"></div>
-    <div id="slider-handle" aria-hidden="true">
-      <span class="slider-arrow">&lt;</span>
-      <span class="slider-grip"></span>
-      <span class="slider-arrow">&gt;</span>
-    </div>
     <div id="timeline-marker"></div>
     <input type="range" id="dateSlider" min="0" max="13" value="13" step="1" aria-label="Daily average air quality date history">
   </div>
@@ -641,8 +613,7 @@
 <div id="info-overlay" aria-hidden="true">
   <section id="info-stack" role="dialog" aria-modal="true" aria-label="Project information">
     <button id="info-close" type="button" aria-label="Close information">x</button>
-    <div id="info-track"></div>
-    <div id="info-dots" aria-hidden="true"></div>
+    <div id="info-scroll"></div>
   </section>
 </div>
 
@@ -699,6 +670,9 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x000000);
 
 const scene = new THREE.Scene();
+const rootGroup = new THREE.Group();
+rootGroup.rotation.x = 5 * (Math.PI / 180);
+scene.add(rootGroup);
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 100);
 camera.position.set(0, 0.5, 3);
 
@@ -742,6 +716,8 @@ let activeTouchMode = 'none';
 let lastTouch = null;
 let pinchStartDistance = 0;
 let pinchStartRadius = orbit.radius;
+const PINCH_PAN_X_SIGN = -1; // EDIT_TWO_FINGER_LEFT_RIGHT_HERE: use 1 if horizontal pan should be flipped.
+const PINCH_PAN_Y_SIGN = 1;
 
 function setRotationTargetFromModelCenter(positionArray) {
   let minX = Infinity, minY = Infinity, minZ = Infinity;
@@ -815,16 +791,23 @@ canvas.addEventListener('wheel', e => {
 }, { passive: false });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
+let lastPinchMidpoint = null;
+
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
   markInteraction();
   if (e.touches.length === 1) {
     activeTouchMode = 'rotate';
     lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    lastPinchMidpoint = null;
   } else if (e.touches.length >= 2) {
     activeTouchMode = 'pinch';
     pinchStartDistance = getTouchDistance(e.touches);
     pinchStartRadius = orbit.radius;
+    lastPinchMidpoint = {
+      x: (e.touches[0].clientX + e.touches[1].clientX) * 0.5,
+      y: (e.touches[0].clientY + e.touches[1].clientY) * 0.5,
+    };
   }
 }, { passive: false });
 
@@ -840,6 +823,19 @@ canvas.addEventListener('touchmove', e => {
     const dist = getTouchDistance(e.touches);
     const scale = dist / Math.max(1, pinchStartDistance);
     orbit.radius = clamp(pinchStartRadius / scale, 0.55, 10);
+    const midX = (e.touches[0].clientX + e.touches[1].clientX) * 0.5;
+    const midY = (e.touches[0].clientY + e.touches[1].clientY) * 0.5;
+    if (lastPinchMidpoint) {
+      const dx = midX - lastPinchMidpoint.x;
+      const dy = midY - lastPinchMidpoint.y;
+      const panSpeed = orbit.radius * 0.0012;
+      const right = new THREE.Vector3();
+      const up    = new THREE.Vector3();
+      camera.matrix.extractBasis(right, up, new THREE.Vector3());
+      orbit.target.addScaledVector(right, PINCH_PAN_X_SIGN * dx * panSpeed);
+      orbit.target.addScaledVector(up,    PINCH_PAN_Y_SIGN * dy * panSpeed);
+    }
+    lastPinchMidpoint = { x: midX, y: midY };
   }
 }, { passive: false });
 
@@ -849,9 +845,11 @@ canvas.addEventListener('touchend', e => {
   if (e.touches.length === 0) {
     activeTouchMode = 'none';
     lastTouch = null;
+    lastPinchMidpoint = null;
   } else if (e.touches.length === 1) {
     activeTouchMode = 'rotate';
     lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    lastPinchMidpoint = null;
   }
 }, { passive: false });
 
@@ -932,7 +930,7 @@ function buildSplatGeometry(buffer, header) {
   // SH DC 계수 → RGB 변환 (가우시안 스플랫 기본)
   const SH_C0 = 0.28209479177387814;
   const safeNumber = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
-  const safeExp = (value) => Math.exp(clamp(safeNumber(value, 0), -12, 4));
+  const safeExp = (value) => Math.exp(clamp(safeNumber(value, 0), -20, 20));
 
   for (let i = 0; i < vertexCount; i++) {
     const base = i * stride;
@@ -963,7 +961,7 @@ function buildSplatGeometry(buffer, header) {
 
     // scale → point size
     const sx = safeExp(g('scale_0')), sy = safeExp(g('scale_1')), sz = safeExp(g('scale_2'));
-    sizes[i] = Math.max(sx, sy, sz) * 150;
+    sizes[i] = safeNumber(Math.max(sx, sy, sz) * 150, 1);
   }
 
   return { positions, colors, sizes, opacities };
@@ -1806,7 +1804,7 @@ function createSphereParticles() {
       const b = radialBright * flicker * (1.35 + p.attach * 0.65);
 
       // 브랜치와 동일한 aqiToRGB 기반 색 + 채도 조절
-      const aqi = p.pmType === 0 ? globalPM25AQI : globalPM10AQI;
+      const aqi = globalPM25AQI; // 단일 DAQI 기준
       const [rc, gc, bc] = aqiToRGB(aqi);
       const grayP = (rc + gc + bc) / 3;
       const satP = 0.5; // 채도 조절
@@ -1827,17 +1825,17 @@ const ASSET_BASE = IS_LOCAL
   ? '.'
   : 'https://pub-69ed5536056046b686d3e07c38041470.r2.dev';
 
-const PLY_FILE = `${ASSET_BASE}/tree_scan2.ply`;
-const LEAVES_FILE = `${ASSET_BASE}/leaves_only1.ply`;
-const GRASS_FILE = `${ASSET_BASE}/grass.ply`;
+const PLY_FILE    = `${ASSET_BASE}/tree_scan2.ply`;
+const LEAVES_FILE = `${ASSET_BASE}/leaves_only.ply`;
 
 const loadingEl   = document.getElementById('loading');
 const loadingBar  = document.getElementById('loading-bar');
 const loadingText = document.getElementById('loading-text');
 const errorEl     = document.getElementById('error-msg');
 const pollutionDisplay = document.getElementById('pollution-display');
-const bandingName = document.getElementById('banding-name');
+const bandingName   = document.getElementById('banding-name');
 const bandingNumber = document.getElementById('banding-number');
+const bandingTitle  = document.getElementById('banding-title');
 const scenarioToggle = document.getElementById('scenario-toggle');
 const scenarioLabel = document.getElementById('scenario-label');
 const dateSlider  = document.getElementById('dateSlider');
@@ -1847,28 +1845,108 @@ const selectedDateValue = document.getElementById('selected-date-value');
 const dialBars    = document.getElementById('dial-bars');
 const infoOverlay = document.getElementById('info-overlay');
 const infoStack   = document.getElementById('info-stack');
-const infoTrack   = document.getElementById('info-track');
-const infoDots    = document.getElementById('info-dots');
+const infoScroll  = document.getElementById('info-scroll');
 const infoClose   = document.getElementById('info-close');
-const infoButtons = Array.from(document.querySelectorAll('.info-button'));
+const infoButtons = [...document.querySelectorAll('.info-button')];
 
-const INFO_STACKS = [
-  {
-    kicker: 'Introduction',
-    copy: `The great oak here at the Horniman Museum and Gardens has been breathing for around 300 years, quietly trading gases with the air. You just cannot see it happening.\n\nThis app lets you watch. The tree was scanned in 3D and now breathes along with the local air in real time. When the air is clean, it breathes full and steady. When pollution rises, the breath turns shallow.`,
-    meta: 'Swipe right for more'
+const INFO_SECTIONS = {
+  intro: {
+    title: 'Introduction',
+    paragraphs: [
+      "The great oak here at the Horniman Museum and Gardens has been breathing for around 300 years, quietly trading gases with the air. You just can't see it happening.",
+      'This app lets you watch. The tree was scanned in 3D and now breathes along with the local air in real time. When the air is clean, it breathes full and steady. When pollution rises, the breath turns shallow.',
+    ],
   },
-  {
-    kicker: 'How to use',
-    copy: `Slide the lower date control to move through recent daily air quality, then continue into future years. Use one finger to rotate the tree and two fingers to zoom.\n\nThe banding number follows the UK air pollution scale from Low to Very High.`,
-    meta: 'Tap outside or x to close'
+  how: {
+    title: 'How to use',
+    list: [
+      'Drag the timeline to move through time, from the past two weeks up to 2100.',
+      'Future Scenario (top right) opens on the cleaner future. Toggle it to see the more polluted one.',
+      'One finger rotates the tree. Pinch to zoom and move.',
+    ],
   },
-  {
-    kicker: 'About future data',
-    copy: `Future years use CMIP6 Surface PM2.5 scenario data for Northern Europe. The green path represents the lower-pollution scenario and the red path represents the higher-pollution scenario.\n\nValues are mapped to the same Air Pollution Banding scale so the tree can breathe through possible futures.`,
-    meta: 'Good and Bad switch the scenario path'
+  future: {
+    title: 'About the future data',
+    paragraphs: [
+      'Like every living thing, this oak is moving through its own span of time. The timeline imagines the years ahead as if it kept breathing alongside us. In a cleaner future, lower particulate levels let that breathing run broad and steady. In a more polluted one, the same breath grows harder to draw. Two futures, shaped by the air we choose to leave behind.',
+    ],
   },
-];
+};
+
+const INFO_PANEL_MAP = {
+  all: ['intro', 'how', 'future'],
+  intro: ['intro'],
+  guide: ['how', 'future'],
+};
+
+function createInfoSection(key) {
+  const data = INFO_SECTIONS[key];
+  const section = document.createElement('section');
+  section.className = 'info-section';
+
+  const heading = document.createElement('h2');
+  heading.className = 'info-heading';
+  heading.textContent = data.title;
+  section.appendChild(heading);
+
+  const copy = document.createElement('div');
+  copy.className = 'info-copy';
+
+  if (data.paragraphs) {
+    data.paragraphs.forEach(text => {
+      const p = document.createElement('p');
+      p.textContent = text;
+      copy.appendChild(p);
+    });
+  }
+
+  if (data.list) {
+    const ol = document.createElement('ol');
+    data.list.forEach(text => {
+      const li = document.createElement('li');
+      li.textContent = text;
+      ol.appendChild(li);
+    });
+    copy.appendChild(ol);
+  }
+
+  section.appendChild(copy);
+  return section;
+}
+
+function openInfoPanel(panel = 'all') {
+  if (!infoOverlay || !infoScroll) return;
+  const keys = INFO_PANEL_MAP[panel] || INFO_PANEL_MAP.all;
+  infoScroll.replaceChildren(...keys.map(createInfoSection));
+  if (panel === 'all') {
+    const hint = document.createElement('div');
+    hint.className = 'info-scroll-hint';
+    hint.textContent = 'Scroll for more';
+    infoScroll.appendChild(hint);
+  }
+  infoScroll.scrollTop = 0;
+  infoOverlay.classList.add('is-open');
+  infoOverlay.setAttribute('aria-hidden', 'false');
+}
+
+function closeInfoPanel() {
+  if (!infoOverlay) return;
+  infoOverlay.classList.remove('is-open');
+  infoOverlay.setAttribute('aria-hidden', 'true');
+}
+
+infoButtons.forEach(button => {
+  button.addEventListener('click', () => openInfoPanel(button.dataset.infoPanel || 'all'));
+});
+infoClose?.addEventListener('click', closeInfoPanel);
+infoOverlay?.addEventListener('click', e => {
+  if (e.target === infoOverlay) closeInfoPanel();
+});
+infoStack?.addEventListener('click', e => e.stopPropagation());
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeInfoPanel();
+});
+openInfoPanel('all');
 
 const FUTURE_SCENARIOS = {
   good: {
@@ -1886,7 +1964,7 @@ const FUTURE_WORST_VALUE = Math.max(...FUTURE_SCENARIOS.bad.series.map(([, value
 
 let splatMaterial = null;
 let leavesMaterial = null;
-let grassMaterial = null;
+
 let particleSystem = null;
 let trunkFlow = null;
 let sphereParticles = null;
@@ -1896,78 +1974,10 @@ let futureScenario = 'good';
 let selectedTimelineIndex = 0;
 let lastTickIndex = null;
 let tickTimer = null;
-let tickVibrationTimer = null;
 let currentStyle = getAQIStyle(1);
 let targetStyle  = { ...currentStyle };
 let lerpT = 1;
 let clock = new THREE.Clock();
-let infoIndex = 0;
-let infoStartX = 0;
-let infoStartY = 0;
-let infoPointerDown = false;
-let introStackShown = false;
-
-function renderInfoStacks() {
-  if (!infoTrack || !infoDots) return;
-  infoTrack.textContent = '';
-  infoDots.textContent = '';
-
-  INFO_STACKS.forEach((item, index) => {
-    const card = document.createElement('article');
-    card.className = 'info-card';
-
-    const kicker = document.createElement('div');
-    kicker.className = 'info-kicker';
-    kicker.textContent = item.kicker;
-
-    const copy = document.createElement('div');
-    copy.className = 'info-copy';
-    copy.textContent = item.copy;
-
-    const meta = document.createElement('div');
-    meta.className = 'info-meta';
-    meta.textContent = item.meta;
-
-    card.append(kicker, copy, meta);
-    infoTrack.appendChild(card);
-
-    const dot = document.createElement('button');
-    dot.className = 'info-dot';
-    dot.type = 'button';
-    dot.setAttribute('aria-label', `Show ${item.kicker}`);
-    dot.addEventListener('click', () => setInfoIndex(index));
-    infoDots.appendChild(dot);
-  });
-}
-
-function setInfoIndex(index) {
-  infoIndex = Math.round(clamp(index, 0, INFO_STACKS.length - 1));
-  if (infoTrack) infoTrack.style.setProperty('--info-index', infoIndex);
-  if (infoDots) {
-    Array.from(infoDots.children).forEach((dot, i) => {
-      dot.classList.toggle('is-active', i === infoIndex);
-    });
-  }
-}
-
-function openInfoStack(index = 0) {
-  if (!infoOverlay) return;
-  setInfoIndex(index);
-  infoOverlay.classList.add('is-open');
-  infoOverlay.setAttribute('aria-hidden', 'false');
-}
-
-function closeInfoStack() {
-  if (!infoOverlay) return;
-  infoOverlay.classList.remove('is-open');
-  infoOverlay.setAttribute('aria-hidden', 'true');
-}
-
-function showIntroStackOnce() {
-  if (introStackShown) return;
-  introStackShown = true;
-  window.setTimeout(() => openInfoStack(0), 720);
-}
 
 function applyAQI(aqi, record = null) {
   targetStyle = getAQIStyle(aqi);
@@ -1979,35 +1989,34 @@ function applyAQI(aqi, record = null) {
   globalPM25AQI = aqi;
   globalPM10AQI = aqi;
   if (record) {
-    globalPM25AQI = record.pm25AQI;
-    globalPM10AQI = record.pm10AQI;
+    globalPM25AQI = record.aqi;
+    globalPM10AQI = record.aqi;
+  }
+  // 미래 데이터면 Particulate Matter, 과거/현재면 Daily Air Quality Index (DAQI)
+  if (bandingTitle) {
+    bandingTitle.textContent = (record?.type === 'future')
+      ? 'Particulate Matter'
+      : 'Daily Air Quality Index (DAQI)';
   }
 }
 
-function updateTimelinePosition(isDragging = false) {
+let dialCurrentOffset = 0;
+let dialTargetOffset = 0;
+let dialRafId = null;
+
+function updateTimelinePosition() {
   const min = Number(dateSlider.min);
   const max = Number(dateSlider.max);
   const value = Number(dateSlider.value);
   const steps = Math.max(1, max - min);
   const width = sliderWrap.getBoundingClientRect().width || window.innerWidth;
   const step = clamp(width / 9.8, 32, 44);
-  const offset = (steps / 2 - (value - min)) * step;
+  const progress = steps ? ((value - min) / steps) * 100 : 0;
+  dialTargetOffset = (steps / 2 - (value - min)) * step;
   aqiPanel.style.setProperty('--dial-step', `${step}px`);
   aqiPanel.style.setProperty('--dial-width', `${steps * step}px`);
-  aqiPanel.style.setProperty('--dial-offset', `${offset}px`);
-  // Apply transform directly to dial-bars for smooth animation
-  if (dialBars) {
-    // Preserve skew if dragging; reset on release
-    const skew = isDragging ? (dragVelocity ? clamp(-dragVelocity * 0.18, -12, 12) : 0) : 0;
-    if (!isDragging) {
-      dialBars.style.transform = `translateX(calc(-50% + ${offset}px)) skewX(${skew}deg)`;
-    }
-    if (isDragging) {
-      dialBars.classList.add('is-dragging');
-    } else {
-      dialBars.classList.remove('is-dragging');
-    }
-  }
+  aqiPanel.style.setProperty('--timeline-progress', `${progress}%`);
+  startDialAnim();
 }
 
 function futureValueToAQI(value) {
@@ -2055,28 +2064,20 @@ function triggerSliderTick() {
   void aqiPanel.offsetWidth;
   aqiPanel.classList.add('is-ticking');
   clearTimeout(tickTimer);
-  tickTimer = setTimeout(() => aqiPanel.classList.remove('is-ticking'), 170);
-  clearTimeout(tickVibrationTimer);
-  tickVibrationTimer = setTimeout(() => {
-    if ('vibrate' in navigator) {
-      try {
-        navigator.vibrate(0);
-        navigator.vibrate([10, 18, 8]);
-      } catch (e) {
-        // Some browsers expose the API but block it silently.
-      }
-    }
-  }, 0);
+  tickTimer = setTimeout(() => aqiPanel.classList.remove('is-ticking'), 90);
+  if ('vibrate' in navigator) {
+    navigator.vibrate(6);
+  }
 }
 
-function setSelectedDate(index, isDragging = false) {
+function setSelectedDate(index) {
   if (!airQualityDays.length) return;
   const safeIndex = Math.round(clamp(index, 0, airQualityDays.length - 1));
   const previousIndex = selectedTimelineIndex;
   const record = airQualityDays[safeIndex];
   selectedTimelineIndex = safeIndex;
   dateSlider.value = safeIndex;
-  updateTimelinePosition(isDragging);
+  updateTimelinePosition();
   applyAQI(record.aqi, record);
   updateDateText(record, safeIndex);
   if (lastTickIndex !== null && safeIndex !== previousIndex) {
@@ -2101,50 +2102,19 @@ scenarioToggle.addEventListener('click', () => {
   futureScenario = futureScenario === 'good' ? 'bad' : 'good';
   rebuildTimeline(selectedTimelineIndex);
 });
-renderInfoStacks();
-setInfoIndex(0);
-infoButtons.forEach(button => {
-  button.addEventListener('click', () => {
-    const index = Number(button.dataset.infoIndex || 0);
-    openInfoStack(index);
-  });
-});
-infoClose?.addEventListener('click', closeInfoStack);
-infoOverlay?.addEventListener('click', e => {
-  if (e.target === infoOverlay) closeInfoStack();
-});
-infoStack?.addEventListener('pointerdown', e => {
-  infoPointerDown = true;
-  infoStartX = e.clientX;
-  infoStartY = e.clientY;
-  infoStack.setPointerCapture?.(e.pointerId);
-});
-infoStack?.addEventListener('pointerup', e => {
-  if (!infoPointerDown) return;
-  infoPointerDown = false;
-  const dx = e.clientX - infoStartX;
-  const dy = e.clientY - infoStartY;
-  if (Math.abs(dx) > 42 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-    setInfoIndex(infoIndex + (dx > 0 ? 1 : -1));
-  }
-  infoStack.releasePointerCapture?.(e.pointerId);
-});
-infoStack?.addEventListener('pointercancel', () => {
-  infoPointerDown = false;
-});
 let timelineDragging = false;
 let timelineStartX = 0;
 let timelineStartIndex = 0;
 let timelineMoved = false;
 function getTimelineStep() {
   const width = sliderWrap.getBoundingClientRect().width || window.innerWidth;
-  return clamp(width / 9.8, 32, 44);
+  return clamp(width / 7.0, 32, 44);
 }
 function setDateFromTimelineDrag(clientX) {
   if (!airQualityDays.length) return;
   const delta = clientX - timelineStartX;
   const index = timelineStartIndex - Math.round(delta / getTimelineStep());
-  setSelectedDate(index, true);
+  setSelectedDate(index);
 }
 function nudgeDateFromTimelineX(clientX) {
   if (!airQualityDays.length) return;
@@ -2162,55 +2132,51 @@ sliderWrap.addEventListener('pointerdown', e => {
   timelineStartIndex = selectedTimelineIndex;
   lastDragX = e.clientX;
   dragVelocity = 0;
-  if (skewRaf) { cancelAnimationFrame(skewRaf); skewRaf = null; }
   sliderWrap.setPointerCapture?.(e.pointerId);
 });
 let lastDragX = 0;
 let dragVelocity = 0;
-let skewRaf = null;
 
-
-function decaySkew() {
+function dialAnimLoop() {
   if (!dialBars) return;
-  dragVelocity *= 0.78;
-  const skew = clamp(dragVelocity * 0.18, -12, 12);
-  const offset = parseFloat(aqiPanel.style.getPropertyValue('--dial-offset')) || 0;
-  dialBars.style.transform = `translateX(calc(-50% + ${offset}px)) skewX(${skew}deg)`;
-  if (Math.abs(dragVelocity) > 0.5) {
-    skewRaf = requestAnimationFrame(decaySkew);
+  const speed = timelineDragging ? 0.85 : 0.80;
+  dialCurrentOffset += (dialTargetOffset - dialCurrentOffset) * speed;
+  if (!timelineDragging) dragVelocity *= 0.75;
+  const skew = clamp(-dragVelocity * 0.14, -10, 10);
+  dialBars.style.transform = `translateX(calc(-50% + ${dialCurrentOffset}px)) skewX(${skew}deg)`;
+
+  const stillMoving = Math.abs(dialTargetOffset - dialCurrentOffset) > 0.1 || Math.abs(dragVelocity) > 0.2;
+  if (stillMoving) {
+    dialRafId = requestAnimationFrame(dialAnimLoop);
   } else {
-    dialBars.style.transform = `translateX(calc(-50% + ${offset}px)) skewX(0deg)`;
-    dragVelocity = 0;
+    dialBars.style.transform = `translateX(calc(-50% + ${dialTargetOffset}px)) skewX(0deg)`;
+    dialRafId = null;
   }
+}
+
+function startDialAnim() {
+  if (!dialRafId) dialRafId = requestAnimationFrame(dialAnimLoop);
 }
 
 sliderWrap.addEventListener('pointermove', e => {
   if (!timelineDragging) return;
   e.preventDefault();
   if (Math.abs(e.clientX - timelineStartX) > 3) timelineMoved = true;
-  dragVelocity = (e.clientX - lastDragX) * 0.6 + dragVelocity * 0.4;
+  dragVelocity = (e.clientX - lastDragX) * 0.5 + dragVelocity * 0.5;
   lastDragX = e.clientX;
   setDateFromTimelineDrag(e.clientX);
-  // Apply skew while dragging
-  if (dialBars) {
-    const offset = parseFloat(aqiPanel.style.getPropertyValue('--dial-offset')) || 0;
-    const skew = clamp(-dragVelocity * 0.18, -12, 12);
-    dialBars.style.transform = `translateX(calc(-50% + ${offset}px)) skewX(${skew}deg)`;
-  }
+  startDialAnim();
 });
 sliderWrap.addEventListener('pointerup', e => {
   e.preventDefault();
   if (!timelineMoved) nudgeDateFromTimelineX(e.clientX);
   timelineDragging = false;
   sliderWrap.releasePointerCapture?.(e.pointerId);
-  // Switch to eased transition on release
-  updateTimelinePosition(false);
-  // Decay skew back to 0
-  if (skewRaf) cancelAnimationFrame(skewRaf);
-  skewRaf = requestAnimationFrame(decaySkew);
+  startDialAnim();
 });
 sliderWrap.addEventListener('pointercancel', () => {
   timelineDragging = false;
+  startDialAnim();
 });
 window.addEventListener('resize', updateTimelinePosition);
 pollutionDisplay.style.setProperty('--band-color', currentStyle.fg);
@@ -2219,6 +2185,9 @@ aqiPanel.style.setProperty('--band-color', currentStyle.fg);
 async function init() {
   try {
     loadingText.textContent = 'LOADING SCENE';
+
+    // Start leaves in parallel, but do not block the first visible tree render on it.
+    const leavesLoadPromise = loadPLY(LEAVES_FILE, () => {});
     const buffer = await loadPLY(PLY_FILE, p => {
       loadingBar.style.width = Math.round(p * 100) + '%';
     });
@@ -2281,12 +2250,17 @@ async function init() {
     });
 
     const points = new THREE.Points(geo, splatMaterial);
-    scene.add(points);
+    rootGroup.add(points);
 
-    const leavesLoadPromise = loadPLY(LEAVES_FILE, () => {});
-    const grassLoadPromise = loadPLY(GRASS_FILE, () => {});
+    loadingText.textContent = 'RENDERING TREE';
+    loadingEl.style.opacity = '0';
+    setTimeout(() => {
+      loadingEl.style.display = 'none';
+    }, 800);
+    animate();
 
-    // ── 이파리 PLY 별도 로드 ──
+    const loadDetailLayers = async () => {
+    // ── 이파리 PLY 처리 (초기 나무 렌더 이후에 추가) ──
     try {
       const leavesBuffer = await leavesLoadPromise;
       const leavesHeader = parsePLYHeader(leavesBuffer);
@@ -2426,52 +2400,10 @@ async function init() {
       });
 
       const leavesPoints = new THREE.Points(lGeo, leavesMaterial);
-      scene.add(leavesPoints);
+      rootGroup.add(leavesPoints);
       console.log('Leaves loaded');
     } catch(e) {
       console.log('Leaves file not found; skipping:', e.message);
-    }
-
-    // ── 바닥 잔디 PLY 별도 로드 ──
-    try {
-      const grassBuffer = await grassLoadPromise;
-      const grassHeader = parsePLYHeader(grassBuffer);
-      const { positions: gPos, colors: gCol, sizes: gSiz, opacities: gOpa } = buildSplatGeometry(grassBuffer, grassHeader);
-
-      // 잔디도 tree_scan2와 같은 좌표계로 정규화
-      for (let i = 0; i < gPos.length; i += 3) {
-        gPos[i]   = (gPos[i]   - centerX) * scale;
-        gPos[i+1] = -(gPos[i+1] - centerY) * scale;
-        gPos[i+2] = (gPos[i+2] - centerZ) * scale;
-      }
-
-      const gGeo = new THREE.BufferGeometry();
-      gGeo.setAttribute('position', new THREE.BufferAttribute(gPos, 3));
-      gGeo.setAttribute('aColor',   new THREE.BufferAttribute(gCol, 3));
-      gGeo.setAttribute('aSize',    new THREE.BufferAttribute(gSiz, 1));
-      gGeo.setAttribute('aOpacity', new THREE.BufferAttribute(gOpa, 1));
-      gGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 3.2);
-
-      grassMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-          uHueShift:  { value: 0.0 },
-          uSatMul:    { value: 1.0 },
-          uBrightMul: { value: 1.0 },
-          uPointScale:{ value: 1.0 },
-        },
-        vertexShader: staticColorShiftVertexShader,
-        fragmentShader,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.NormalBlending,
-      });
-
-      const grassPoints = new THREE.Points(gGeo, grassMaterial);
-      grassPoints.renderOrder = -1;
-      scene.add(grassPoints);
-      console.log('Grass loaded');
-    } catch(e) {
-      console.log('Grass file not found; skipping:', e.message);
     }
 
     // 브랜치 대표점 계산 → 셰이더 uniform에 설정
@@ -2496,16 +2428,17 @@ async function init() {
 
     // 기둥 빛 흐름 레이어 — 뷰어와 동일한 좌표 변환 적용
     trunkFlow = createTrunkFlow(centerX, centerY, centerZ, scale);
-    scene.add(trunkFlow.mesh);
+    rootGroup.add(trunkFlow.mesh);
     sphereParticles = createSphereParticles();
-    scene.add(sphereParticles.mesh);
+    rootGroup.add(sphereParticles.mesh);
 
-    // 로딩 숨기기
-    loadingEl.style.opacity = '0';
-    setTimeout(() => loadingEl.style.display = 'none', 800);
-    showIntroStackOnce();
+    };
 
-    animate();
+    // Keep the first visible render responsive; add heavier detail layers after the intro settles.
+    const scheduleDetailLoad = (callback) => setTimeout(callback, 3200);
+    scheduleDetailLoad(() => {
+      loadDetailLayers().catch(error => console.warn('Detail layers failed:', error));
+    });
 
   } catch (err) {
     loadingEl.style.display = 'none';
@@ -2515,9 +2448,8 @@ async function init() {
       <div style="color:rgba(255,255,255,0.7); margin-bottom:12px;">${err.message}</div>
       <div style="font-size:11px; line-height:2;">
         <b style="color:rgba(255,255,255,0.5)">Please check:</b><br>
-        1. <code style="color:#4ade80">tree_scan2.ply</code> is in the same folder as this HTML file.<br>
-        2. Open this page through a local server, such as VS Code Live Server. Do not open the HTML file directly.<br>
-        3. Check the asset file names for typos.
+        1. Check your network connection and try refreshing.<br>
+        2. If the issue persists, the 3D asset server may be temporarily unavailable.
       </div>
     `;
   }
@@ -2578,11 +2510,10 @@ function animate() {
     u.uBreathSpeed.value = currentStyle.breathSpeed;
     u.uPulseSize.value   = currentStyle.pulseSize;
     u.uCrackOpen.value   = currentStyle.crackOpen;
-    // 나무 원본은 색 변화 없이 항상 고정
-    u.uHueShift.value    = 0;
-    u.uSatMul.value      = 1.0;
+    u.uHueShift.value    = currentStyle.hueShift;
+    u.uSatMul.value      = currentStyle.satMul;
     u.uTreeSatMul.value  = currentStyle.treeSatMul;
-    u.uBrightMul.value   = 1.4;
+    u.uBrightMul.value   = currentStyle.brightMul;
   }
 
   // 이파리 호흡 업데이트 — AQI가 낮을수록 크게 호흡하고, 높을수록 수축
@@ -2598,12 +2529,7 @@ function animate() {
   }
 
   // 바닥 잔디 업데이트 — 움직임 없이 AQI 색/채도/밝기만 반응
-  if (grassMaterial) {
-    const u = grassMaterial.uniforms;
-    u.uHueShift.value  = currentStyle.hueShift;
-    u.uSatMul.value    = currentStyle.satMul;
-    u.uBrightMul.value = currentStyle.brightMul;
-  }
+
 
   // 배경색
   const fogC = currentStyle.fogDensity;
@@ -2663,101 +2589,99 @@ function pm10ToDAQI(v) {
   if (v <= 83) return 7; if (v <= 91) return 8; if (v <= 100) return 9;
   return 10;
 }
-
-// ── Open-Meteo: 14일 히스토리 베이스 ──────────────────────
+function no2ToDAQI(v) {
+  if (v <= 67)  return 1; if (v <= 134) return 2; if (v <= 200) return 3;
+  if (v <= 267) return 4; if (v <= 334) return 5; if (v <= 400) return 6;
+  if (v <= 467) return 7; if (v <= 534) return 8; if (v <= 600) return 9;
+  return 10;
+}
+function o3ToDAQI(v) {
+  if (v <= 33)  return 1; if (v <= 66)  return 2; if (v <= 100) return 3;
+  if (v <= 120) return 4; if (v <= 140) return 5; if (v <= 160) return 6;
+  if (v <= 187) return 7; if (v <= 213) return 8; if (v <= 240) return 9;
+  return 10;
+}
+function worstDaqiFromHourly(data, dateKey, todayOnly) {
+  const times = data.hourly?.time              || [];
+  const pm25v  = data.hourly?.pm2_5            || [];
+  const pm10v  = data.hourly?.pm10             || [];
+  const no2v   = data.hourly?.nitrogen_dioxide || [];
+  const o3v    = data.hourly?.ozone            || [];
+  const nowHour = new Date().toISOString().slice(0, 13);
+  let worst = 0;
+  for (let i = 0; i < times.length; i++) {
+    if (!times[i].startsWith(dateKey)) continue;
+    if (todayOnly && times[i].slice(0, 13) > nowHour) continue;
+    if (!Number.isFinite(pm25v[i]) || !Number.isFinite(pm10v[i])) continue;
+    const daqi = Math.max(
+      pm25ToDAQI(pm25v[i]), pm10ToDAQI(pm10v[i]),
+      no2ToDAQI(Number.isFinite(no2v[i]) ? no2v[i] : 0),
+      o3ToDAQI(Number.isFinite(o3v[i])   ? o3v[i]  : 0)
+    );
+    if (daqi > worst) worst = daqi;
+  }
+  return worst || 1;
+}
 function getHourlyValue(data, dateKey, todayOnly) {
   const times = data.hourly?.time || [];
   const pm25v  = data.hourly?.pm2_5 || [];
   const pm10v  = data.hourly?.pm10  || [];
-  if (todayOnly) {
-    // 현재 시각에 가장 가까운 과거 시간값 한 개
-    const nowHour = new Date().toISOString().slice(0, 13);
-    let best = -1;
-    for (let i = 0; i < times.length; i++) {
-      if (!times[i].startsWith(dateKey)) continue;
-      if (times[i].slice(0, 13) <= nowHour) best = i;
-    }
-    if (best < 0) return null;
-    const p25 = pm25v[best], p10 = pm10v[best];
-    if (!Number.isFinite(p25) || !Number.isFinite(p10)) return null;
-    return { pm25: p25, pm10: p10, count: 1 };
-  }
-  // 과거 날짜: 그날 중 가장 나쁜 시간값 (최대 DAQI 기준)
+  const nowHour = new Date().toISOString().slice(0, 13);
   let worstPM25 = 0, worstPM10 = 0, worstDAQI = 0, n = 0;
   for (let i = 0; i < times.length; i++) {
     if (!times[i].startsWith(dateKey)) continue;
+    if (todayOnly && times[i].slice(0, 13) > nowHour) continue;
     if (!Number.isFinite(pm25v[i]) || !Number.isFinite(pm10v[i])) continue;
     const daqi = Math.max(pm25ToDAQI(pm25v[i]), pm10ToDAQI(pm10v[i]));
-    if (daqi > worstDAQI) {
-      worstDAQI = daqi;
-      worstPM25 = pm25v[i];
-      worstPM10 = pm10v[i];
-    }
+    if (daqi > worstDAQI) { worstDAQI = daqi; worstPM25 = pm25v[i]; worstPM10 = pm10v[i]; }
     n++;
   }
   return n ? { pm25: worstPM25, pm10: worstPM10, count: n } : null;
 }
-
-async function fetchJSONWithTimeout(url, label, timeoutMs = 6500) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { signal: controller.signal });
-    if (!res.ok) throw new Error(`${label} HTTP ${res.status}`);
-    return res.json();
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 async function fetchOpenMeteo() {
-  const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=51.4569&longitude=-0.0160&hourly=pm2_5,pm10&past_days=13&forecast_days=1&timezone=Europe%2FLondon';
-  return fetchJSONWithTimeout(url, 'Open-Meteo');
+  const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=51.4613&longitude=-0.0139&hourly=pm2_5,pm10,nitrogen_dioxide,ozone&past_days=13&forecast_days=1&timezone=Europe%2FLondon';
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
+  return res.json();
 }
-
-// ── LAQN: 오늘 실시간 DAQI (Hourly 엔드포인트, 날짜 파라미터 없음) ──
-async function fetchLAQNHourlyToday(dateKey) {
-  const url = 'https://api.erg.ic.ac.uk/AirQuality/Hourly/MonitoringIndex/GroupName=London/Json';
-  const data = await fetchJSONWithTimeout(url, 'LAQN Hourly');
-
-  const authorities = data?.HourlyAirQualityIndex?.LocalAuthority;
-  if (!authorities) {
-    console.warn('[LAQN] Unexpected response shape:', JSON.stringify(data).slice(0, 200));
-    return null;
-  }
-
+async function fetchLAQNDailyToday(dateKey) {
+  const [y, m, d] = dateKey.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateStr = `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+  const url = `https://api.erg.ic.ac.uk/AirQuality/Daily/MonitoringIndex/GroupName=London/Date=${encodeURIComponent(dateStr)}/Json`;
+  console.log('[LAQN Daily] Requesting:', url);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`LAQN Daily HTTP ${res.status}`);
+  const data = await res.json();
+  const authorities = data?.DailyAirQualityIndex?.LocalAuthority;
+  if (!authorities) { console.warn('[LAQN Daily] Unexpected shape'); return null; }
   const authArr = Array.isArray(authorities) ? authorities : [authorities];
-  console.log('[LAQN] Local authority list:', authArr.map(a => a['@LocalAuthorityName']).join(', '));
-
-  const lewisham = authArr.find(a =>
-    a['@LocalAuthorityName']?.toLowerCase().includes('lewisham')
-  );
-  if (!lewisham) return null;
-
-  const sites = lewisham.Site;
-  if (!sites) return null;
-  const siteArr = Array.isArray(sites) ? sites : [sites];
-
-  let aqi = 0, pm25 = 0, pm10 = 0;
-  for (const s of siteArr) {
-    const i = parseInt(s['@AirQualityIndex']) || 0;
-    if (i > aqi) aqi = i;
-    const sp = s.Species;
-    if (sp) {
-      for (const x of (Array.isArray(sp) ? sp : [sp])) {
-        const c = x['@SpeciesCode']?.toUpperCase();
-        const v = parseInt(x['@AirQualityIndex']) || 0;
-        if (c === 'PM25' && v > pm25) pm25 = v;
-        if (c === 'PM10' && v > pm10) pm10 = v;
-      }
+  const withSites = authArr.filter(a => a.Site).map(a => a['@LocalAuthorityName']);
+  console.log('[LAQN Daily] Authorities with sites:', withSites.join(', ') || 'NONE');
+  const priority = ['lewisham','southwark','greenwich','lambeth','bromley','city of london','tower hamlets','wandsworth'];
+  for (const name of priority) {
+    const auth = authArr.find(a => a['@LocalAuthorityName']?.toLowerCase().includes(name));
+    if (!auth?.Site) continue;
+    const siteArr = Array.isArray(auth.Site) ? auth.Site : [auth.Site];
+    let aqi = 0;
+    for (const s of siteArr) { const i = parseInt(s['@AirQualityIndex']) || 0; if (i > aqi) aqi = i; }
+    if (!aqi) continue;
+    console.log(`[LAQN Daily] DAQI: ${aqi} (source: ${auth['@LocalAuthorityName']})`);
+    return { dateKey, aqi, pm25AQI: aqi, pm10AQI: aqi, unavailable: false, sampleCount: siteArr.length };
+  }
+  let bestAqi = 0, bestAuth = '';
+  for (const auth of authArr) {
+    if (!auth.Site) continue;
+    const siteArr = Array.isArray(auth.Site) ? auth.Site : [auth.Site];
+    for (const s of siteArr) {
+      const i = parseInt(s['@AirQualityIndex']) || 0;
+      if (i > bestAqi) { bestAqi = i; bestAuth = auth['@LocalAuthorityName']; }
     }
   }
-  if (!aqi) return null;
-  console.log(`[LAQN] Lewisham DAQI: ${aqi} (PM2.5:${pm25||aqi} PM10:${pm10||aqi})`);
-  return { dateKey, aqi, pm25AQI: pm25||aqi, pm10AQI: pm10||aqi, unavailable: false, sampleCount: siteArr.length };
+  if (!bestAqi) { console.warn('[LAQN Daily] No data from any authority'); return null; }
+  console.log(`[LAQN Daily] DAQI: ${bestAqi} (source: ${bestAuth})`);
+  return { dateKey, aqi: bestAqi, pm25AQI: bestAqi, pm10AQI: bestAqi, unavailable: false, sampleCount: 1 };
 }
-
-// ── 타임라인 조립 ─────────────────────────────────────────
 function buildFallbackRecord(dateKey) {
   return { dateKey, aqi: 1, pm25AQI: 1, pm10AQI: 1, unavailable: true, sampleCount: 0 };
 }
@@ -2765,101 +2689,54 @@ function buildFallbackTimeline() {
   const today = getLondonDateKey();
   return Array.from({ length: 14 }, (_, i) => buildFallbackRecord(shiftDateKey(today, i - 13)));
 }
-
 async function fetchAirQualityTimeline() {
   const todayKey = getLondonDateKey();
   const dates = Array.from({ length: 14 }, (_, i) => shiftDateKey(todayKey, i - 13));
-
-  // Open-Meteo (히스토리) + LAQN Hourly (오늘 실측) 병렬 요청
   const [omResult, laqnResult] = await Promise.allSettled([
     fetchOpenMeteo(),
-    fetchLAQNHourlyToday(todayKey),
+    fetchLAQNDailyToday(todayKey),
   ]);
-
-  const omData    = omResult.status    === 'fulfilled' ? omResult.value    : null;
-  const todayLAQN = laqnResult.status  === 'fulfilled' ? laqnResult.value  : null;
-
+  const omData    = omResult.status  === 'fulfilled' ? omResult.value  : null;
+  const todayLAQN = laqnResult.status === 'fulfilled' ? laqnResult.value : null;
   if (!omData)    console.warn('[Open-Meteo] Failed:', omResult.reason?.message);
-  if (!todayLAQN) console.warn('[LAQN] No live reading for today; using nearest Open-Meteo value.');
-
+  if (!todayLAQN) console.warn('[LAQN Daily] No reading; using Open-Meteo fallback.');
   return dates.map((dateKey, i) => {
     const isToday = i === dates.length - 1;
-
     if (isToday && todayLAQN) return todayLAQN;
-
     if (omData) {
+      const worst = worstDaqiFromHourly(omData, dateKey, isToday);
       const h = getHourlyValue(omData, dateKey, isToday);
-      if (h) {
-        const p25 = pm25ToDAQI(h.pm25), p10 = pm10ToDAQI(h.pm10);
-        return { dateKey, aqi: Math.max(p25, p10), pm25AQI: p25, pm10AQI: p10, unavailable: false, sampleCount: h.count };
-      }
+      const p25 = h ? pm25ToDAQI(h.pm25) : 1;
+      const p10 = h ? pm10ToDAQI(h.pm10) : 1;
+      return { dateKey, aqi: worst, pm25AQI: p25, pm10AQI: p10, unavailable: false, sampleCount: h?.count || 0 };
     }
     return buildFallbackRecord(dateKey);
   });
 }
 
-const AIR_QUALITY_CACHE_KEY = 'oaktree-air-quality-timeline-v1';
-const AIR_QUALITY_CACHE_MS = 10 * 60 * 1000;
-
-async function fetchCachedAirQualityTimeline() {
-  const todayKey = getLondonDateKey();
-  try {
-    const cached = JSON.parse(sessionStorage.getItem(AIR_QUALITY_CACHE_KEY) || 'null');
-    if (
-      cached &&
-      cached.todayKey === todayKey &&
-      Date.now() - cached.savedAt < AIR_QUALITY_CACHE_MS &&
-      Array.isArray(cached.records)
-    ) {
-      return cached.records;
-    }
-  } catch (e) {
-    // Ignore invalid cache and fetch fresh data.
-  }
-
-  const records = await fetchAirQualityTimeline();
-  try {
-    sessionStorage.setItem(AIR_QUALITY_CACHE_KEY, JSON.stringify({
-      todayKey,
-      savedAt: Date.now(),
-      records,
-    }));
-  } catch (e) {
-    // Storage can be unavailable in private browsing.
-  }
-  return records;
-}
-
-function applyObservedTimeline(preferExistingIndex = false) {
+async function startApp() {
+  observedDays = buildFallbackTimeline();
   airQualityDays = [...observedDays, ...buildFutureTimeline(futureScenario)];
   dateSlider.max = Math.max(0, airQualityDays.length - 1);
   const todayIndex = observedDays.length - 1;
-  const index = preferExistingIndex
-    ? clamp(selectedTimelineIndex, 0, airQualityDays.length - 1)
-    : todayIndex;
-  dateSlider.value = index;
-  setSelectedDate(index);
+  dateSlider.value = todayIndex;
+  setSelectedDate(todayIndex);
   updateScenarioToggle();
 
-  const r = airQualityDays[index] || observedDays[observedDays.length - 1];
-  if (r) {
-    currentStyle = getAQIStyle(r.aqi);
-    targetStyle  = { ...currentStyle };
-    console.log(`Timeline ready (${r.dateKey}) DAQI:${r.aqi} PM2.5:${r.pm25AQI} PM10:${r.pm10AQI} unavailable:${r.unavailable}`);
-  }
-}
+  const r = observedDays[observedDays.length - 1];
+  console.log(`Today (${r.dateKey}) DAQI:${r.aqi} PM2.5:${r.pm25AQI} PM10:${r.pm10AQI} unavailable:${r.unavailable}`);
+  console.log(`Future scenario: ${FUTURE_SCENARIOS[futureScenario].label}, PDF upper line 2030-2100`);
 
-async function startApp() {
-  observedDays = buildFallbackTimeline();
-  applyObservedTimeline(false);
-
-  const timelinePromise = fetchCachedAirQualityTimeline();
+  currentStyle = getAQIStyle(r.aqi);
+  targetStyle  = { ...currentStyle };
   init();
 
   try {
-    observedDays = await timelinePromise;
-    applyObservedTimeline(true);
-    console.log(`Future scenario: ${FUTURE_SCENARIOS[futureScenario].label}, PDF upper line 2030-2100`);
+    const freshObservedDays = await fetchAirQualityTimeline();
+    observedDays = freshObservedDays;
+    rebuildTimeline(selectedTimelineIndex);
+    const fresh = observedDays[observedDays.length - 1];
+    console.log(`Updated today (${fresh.dateKey}) DAQI:${fresh.aqi} PM2.5:${fresh.pm25AQI} PM10:${fresh.pm10AQI} unavailable:${fresh.unavailable}`);
   } catch(error) {
     console.error('Air quality data failed:', error);
   }
