@@ -331,15 +331,6 @@
   .info-copy li + li {
     margin-top: 10px;
   }
-  .info-scroll-hint {
-    margin-top: 18px;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.38);
-  }
-
   /* ── 날짜 다이얼 — 하단 전체폭 ── */
   #aqi-panel {
     position: fixed;
@@ -1926,12 +1917,6 @@ function openInfoPanel(panel = 'all') {
   if (!infoOverlay || !infoScroll) return;
   const keys = INFO_PANEL_MAP[panel] || INFO_PANEL_MAP.all;
   infoScroll.replaceChildren(...keys.map(createInfoSection));
-  if (panel === 'all') {
-    const hint = document.createElement('div');
-    hint.className = 'info-scroll-hint';
-    hint.textContent = 'Scroll for more';
-    infoScroll.appendChild(hint);
-  }
   infoScroll.scrollTop = 0;
   infoOverlay.classList.add('is-open');
   infoOverlay.setAttribute('aria-hidden', 'false');
