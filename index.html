@@ -411,14 +411,14 @@
     height: 46px;
     background: linear-gradient(90deg,
       rgba(255,255,255,0),
-      rgba(255,255,255,0.025) 18%,
-      rgba(255,255,255,0.14) 38%,
-      rgba(255,255,255,0.26) 50%,
-      rgba(255,255,255,0.14) 62%,
-      rgba(255,255,255,0.025) 82%,
+      rgba(255,255,255,0.04) 16%,
+      rgba(255,255,255,0.20) 38%,
+      rgba(255,255,255,0.38) 50%,
+      rgba(255,255,255,0.20) 62%,
+      rgba(255,255,255,0.04) 84%,
       rgba(255,255,255,0)
     );
-    filter: blur(0.2px);
+    filter: blur(0.45px);
     mix-blend-mode: screen;
     transform: translateX(-20%) skewX(-18deg);
     opacity: 0;
@@ -511,14 +511,14 @@
       transform: translateX(-12%) skewX(-18deg);
     }
     30% {
-      opacity: 0.22;
+      opacity: 0.34;
     }
     66% {
-      opacity: 0.30;
+      opacity: 0.44;
       transform: translateX(190%) skewX(-18deg);
     }
     84% {
-      opacity: 0.16;
+      opacity: 0.24;
     }
     100% {
       opacity: 0;
@@ -592,8 +592,7 @@
     <span id="scenario-switch" aria-hidden="true"></span>
   </button>
   <div id="info-dock" aria-label="Information panels">
-    <button class="info-button" type="button" data-info-panel="intro" aria-label="Open introduction">i</button>
-    <button class="info-button" type="button" data-info-panel="guide" aria-label="Open how to use and future data">?</button>
+    <button class="info-button" type="button" data-info-panel="all" aria-label="Open project information">i</button>
   </div>
 </div>
 
@@ -1939,7 +1938,6 @@ infoStack?.addEventListener('click', e => e.stopPropagation());
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeInfoPanel();
 });
-openInfoPanel('all');
 
 const FUTURE_SCENARIOS = {
   good: {
@@ -2021,7 +2019,7 @@ function futureValueToAQI(value) {
 
 function buildFutureTimeline(scenarioKey) {
   const scenario = FUTURE_SCENARIOS[scenarioKey] || FUTURE_SCENARIOS.good;
-  return scenario.series.map(([year, value]) => {
+  return scenario.series.filter(([year]) => year % 10 === 0).map(([year, value]) => {
     const aqi = futureValueToAQI(value);
     return {
       type: 'future',
