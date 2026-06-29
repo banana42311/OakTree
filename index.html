@@ -941,12 +941,25 @@ async function loadPLY(url, onProgress) {
     if (done) break;
     chunks.push(value);
     loaded += value.byteLength;
-    if (total) onProgress(loaded / total);
+    if (total && onProgress) onProgress(loaded / total);
   }
   const buffer = new Uint8Array(loaded);
   let offset = 0;
   for (const chunk of chunks) { buffer.set(chunk, offset); offset += chunk.byteLength; }
   return buffer.buffer;
+}
+
+async function loadFirstAvailablePLY(urls, onProgress) {
+  let lastError = null;
+  for (const url of urls) {
+    try {
+      return await loadPLY(url, onProgress);
+    } catch (error) {
+      lastError = error;
+      console.warn(`PLY candidate failed: ${url}`, error.message);
+    }
+  }
+  throw lastError || new Error('No PLY candidates available');
 }
 
 function parsePLYHeader(buffer) {
@@ -1886,8 +1899,10 @@ const ASSET_BASE = IS_LOCAL
   ? '.'
   : 'https://pub-69ed5536056046b686d3e07c38041470.r2.dev';
 
-const PLY_FILE    = `${ASSET_BASE}/tree_scan2.ply`;
-const LEAVES_FILE = `${ASSET_BASE}/leaves_only.ply`;
+const PLY_FILE    = `${ASSET_BASE}/tree_scan2_compact.ply`;
+const PLY_FALLBACK_FILE = `${ASSET_BASE}/tree_scan2.ply`;
+const LEAVES_FILE = `${ASSET_BASE}/leaves_only_compact.ply`;
+const LEAVES_FALLBACK_FILE = `${ASSET_BASE}/leaves_only.ply`;
 
 const loadingEl   = document.getElementById('loading');
 const loadingBar  = document.getElementById('loading-bar');
@@ -2265,12 +2280,12 @@ async function init() {
   try {
     loadingText.textContent = 'LOADING SCENE';
 
-    // Load the trunk/base scan and leaves together so the first visible render is complete.
+    // Prefer compact PLY assets for web loading; fall back to originals if they are not deployed yet.
     const [buffer, leavesBuffer] = await Promise.all([
-      loadPLY(PLY_FILE, p => {
+      loadFirstAvailablePLY([PLY_FILE, PLY_FALLBACK_FILE], p => {
         loadingBar.style.width = Math.round(p * 100) + '%';
       }),
-      loadPLY(LEAVES_FILE, () => null).catch(() => null),
+      loadFirstAvailablePLY([LEAVES_FILE, LEAVES_FALLBACK_FILE], () => null).catch(() => null),
     ]);
 
     loadingText.textContent = 'BUILDING SPLATS';
