@@ -732,7 +732,8 @@ renderer.setClearColor(0x000000);
 
 const scene = new THREE.Scene();
 const rootGroup = new THREE.Group();
-rootGroup.rotation.x = 5 * (Math.PI / 180);
+const MODEL_BASE_TILT_X = 0;
+rootGroup.rotation.x = MODEL_BASE_TILT_X;
 scene.add(rootGroup);
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 100);
 camera.position.set(0, 0.5, 3);
@@ -768,6 +769,7 @@ const orbit = {
   last: { x: 0, y: 0 },
   target: MODEL_ROTATION_TARGET.clone(),
 };
+let modelYaw = -INTRO_CAMERA.startTheta;
 let lastInteractionTime = performance.now();
 let introStartTime = null;
 let introActive = true;
@@ -777,8 +779,6 @@ let activeTouchMode = 'none';
 let lastTouch = null;
 let pinchStartDistance = 0;
 let pinchStartRadius = orbit.radius;
-const PINCH_PAN_X_SIGN = -1; // EDIT_TWO_FINGER_LEFT_RIGHT_HERE: use 1 if horizontal pan should be flipped.
-const PINCH_PAN_Y_SIGN = 1;
 
 function setRotationTargetFromModelCenter(positionArray) {
   let minX = Infinity, minY = Infinity, minZ = Infinity;
@@ -811,11 +811,71 @@ function getTouchDistance(touches) {
   return Math.hypot(dx, dy);
 }
 
-function rotateOrbit(dx, dy, speed = 0.0065) {
-  orbit.theta -= dx * speed;
+// Grass plane leveling measured from grass.ply. Applied to model vertices, not the root group,
+// so the ground stays level while the tree keeps rotating around the Y axis.
+const MODEL_LEVEL_MATRIX = [
+   0.9996378236193334,  0.0268910393029531, -0.0010457508353165,
+  -0.0268910393029531,  0.9966183147061564, -0.0776453913472489,
+  -0.0010457508353165,  0.0776453913472489,  0.9969804910868230,
+];
+
+function levelNormalizedPoint(x, y, z) {
+  const m = MODEL_LEVEL_MATRIX;
+  return {
+    x: m[0] * x + m[1] * y + m[2] * z,
+    y: m[3] * x + m[4] * y + m[5] * z,
+    z: m[6] * x + m[7] * y + m[8] * z,
+  };
+}
+
+function levelNormalizedPositionArray(positions) {
+  for (let i = 0; i < positions.length; i += 3) {
+    const p = levelNormalizedPoint(positions[i], positions[i + 1], positions[i + 2]);
+    positions[i] = p.x;
+    positions[i + 1] = p.y;
+    positions[i + 2] = p.z;
+  }
+}
+
+function normalizeAndLevelPoint(x, y, z, cx, cy, cz, sc) {
+  return levelNormalizedPoint(
+    (x - cx) * sc,
+    -(y - cy) * sc,
+    (z - cz) * sc,
+  );
+}
+
+function computeBoundsFromPositions(positions) {
+  const bMin = new THREE.Vector3(Infinity, Infinity, Infinity);
+  const bMax = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
+  for (let i = 0; i < positions.length; i += 3) {
+    const x = positions[i], y = positions[i + 1], z = positions[i + 2];
+    bMin.x = Math.min(bMin.x, x); bMax.x = Math.max(bMax.x, x);
+    bMin.y = Math.min(bMin.y, y); bMax.y = Math.max(bMax.y, y);
+    bMin.z = Math.min(bMin.z, z); bMax.z = Math.max(bMax.z, z);
+  }
+  return { bMin, bMax };
+}
+
+function applyModelTransform() {
+  rootGroup.rotation.x = MODEL_BASE_TILT_X;
+  rootGroup.rotation.y = modelYaw;
+  rootGroup.rotation.z = 0;
+}
+
+function rotateModel(dx, dy = 0, speed = 0.0065) {
+  modelYaw += dx * speed;
   orbit.phi = clamp(orbit.phi - dy * speed, 0.24, Math.PI - 0.24);
-  thetaVelocity = -dx * speed * 0.08;
+  orbit.theta = -modelYaw;
+  thetaVelocity = dx * speed * 0.08;
   phiVelocity = -dy * speed * 0.04;
+  applyModelTransform();
+}
+
+function panModelOnScreen(dx, dy, speed) {
+  rootGroup.position.x += dx * speed;
+  rootGroup.position.y -= dy * speed;
+  rootGroup.position.z = 0;
 }
 
 canvas.addEventListener('mousedown', e => {
@@ -835,13 +895,12 @@ window.addEventListener('mousemove', e => {
   const dx = e.clientX - orbit.last.x, dy = e.clientY - orbit.last.y;
   if (orbit.dragging) {
     markInteraction();
-    rotateOrbit(dx, dy, 0.0065);
+    rotateModel(dx, dy, 0.0065);
   }
   if (orbit.panning) {
     markInteraction();
     const panSpeed = orbit.radius * 0.001;
-    orbit.target.x -= dx * panSpeed;
-    orbit.target.y += dy * panSpeed;
+    panModelOnScreen(dx, dy, panSpeed);
   }
   orbit.last = { x: e.clientX, y: e.clientY };
 });
@@ -878,7 +937,7 @@ canvas.addEventListener('touchmove', e => {
   if (e.touches.length === 1 && activeTouchMode === 'rotate' && lastTouch) {
     const dx = e.touches[0].clientX - lastTouch.x;
     const dy = e.touches[0].clientY - lastTouch.y;
-    rotateOrbit(dx, dy, 0.006);
+    rotateModel(dx, dy, 0.006);
     lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   } else if (e.touches.length >= 2) {
     const dist = getTouchDistance(e.touches);
@@ -890,11 +949,7 @@ canvas.addEventListener('touchmove', e => {
       const dx = midX - lastPinchMidpoint.x;
       const dy = midY - lastPinchMidpoint.y;
       const panSpeed = orbit.radius * 0.0012;
-      const right = new THREE.Vector3();
-      const up    = new THREE.Vector3();
-      camera.matrix.extractBasis(right, up, new THREE.Vector3());
-      orbit.target.addScaledVector(right, PINCH_PAN_X_SIGN * dx * panSpeed);
-      orbit.target.addScaledVector(up,    PINCH_PAN_Y_SIGN * dy * panSpeed);
+      panModelOnScreen(dx, dy, panSpeed);
     }
     lastPinchMidpoint = { x: midX, y: midY };
   }
@@ -917,14 +972,14 @@ canvas.addEventListener('touchend', e => {
 function updateCamera() {
   camera.up.set(0, 1, 0);
   camera.position.set(
-    orbit.target.x + orbit.radius * Math.sin(orbit.phi) * Math.sin(orbit.theta),
-    orbit.target.y + orbit.radius * Math.cos(orbit.phi) + CAMERA_Y_OFFSET,
-    orbit.target.z + orbit.radius * Math.sin(orbit.phi) * Math.cos(orbit.theta)
+    0,
+    orbit.radius * Math.cos(orbit.phi) + CAMERA_Y_OFFSET,
+    orbit.radius * Math.sin(orbit.phi)
   );
   camera.lookAt(
-    orbit.target.x,
-    orbit.target.y + CAMERA_LOOK_AT_Y_OFFSET,
-    orbit.target.z
+    0,
+    CAMERA_LOOK_AT_Y_OFFSET,
+    0
   );
 }
 
@@ -1354,11 +1409,7 @@ const BRANCH_DATA = [{"name":"branch1_1","points":[{"x":3.7459,"y":-2.5956,"z":-
 function createTrunkFlow(cx, cy, cz, sc) {
   // 메인 나무와 동일한 정규화 (Y축 반전)
   function toWorld(p) {
-    return {
-      x:  (p.x - cx) * sc,
-      y: -(p.y - cy) * sc,
-      z:  (p.z - cz) * sc,
-    };
+    return normalizeAndLevelPoint(p.x, p.y, p.z, cx, cy, cz, sc);
   }
 
   // 각 브랜치 중심선 변환
@@ -2099,7 +2150,7 @@ function futureValueToAQI(value) {
 
 function buildFutureTimeline(scenarioKey) {
   const scenario = FUTURE_SCENARIOS[scenarioKey] || FUTURE_SCENARIOS.good;
-  return scenario.series.filter(([year]) => year % 10 === 0).map(([year, value]) => {
+  return scenario.series.filter(([year]) => year % 5 === 0).map(([year, value]) => {
     const aqi = futureValueToAQI(value);
     return {
       type: 'future',
@@ -2311,8 +2362,8 @@ async function init() {
       positions[i+1] = -(positions[i+1] - centerY) * scale;
       positions[i+2] = (positions[i+2] - centerZ) * scale;
     }
-    const bMin = new THREE.Vector3((minX-centerX)*scale, -(maxY-centerY)*scale, (minZ-centerZ)*scale);
-    const bMax = new THREE.Vector3((maxX-centerX)*scale, -(minY-centerY)*scale, (maxZ-centerZ)*scale);
+    levelNormalizedPositionArray(positions);
+    const { bMin, bMax } = computeBoundsFromPositions(positions);
     setRotationTargetFromModelCenter(positions);
 
     // 지오메트리
@@ -2358,9 +2409,10 @@ async function init() {
 
       // 이파리도 동일한 정규화 적용
       for (let i = 0; i < lPos.length; i += 3) {
-        lPos[i]   = (lPos[i]   - centerX) * scale;
-        lPos[i+1] = -(lPos[i+1] - centerY) * scale;
-        lPos[i+2] = (lPos[i+2] - centerZ) * scale;
+        const p = normalizeAndLevelPoint(lPos[i], lPos[i + 1], lPos[i + 2], centerX, centerY, centerZ, scale);
+        lPos[i] = p.x;
+        lPos[i+1] = p.y;
+        lPos[i+2] = p.z;
       }
       rebuildLeafParticleTargets(lPos);
 
@@ -2499,11 +2551,8 @@ async function init() {
     // 브랜치 대표점 계산 → 셰이더 uniform에 설정
     const branchCenters = BRANCH_DATA.map(br => {
       const mid = br.points[Math.floor(br.points.length * 0.5)];
-      return new THREE.Vector3(
-        (mid.x - centerX) * scale,
-        -(mid.y - centerY) * scale,
-        (mid.z - centerZ) * scale,
-      );
+      const p = normalizeAndLevelPoint(mid.x, mid.y, mid.z, centerX, centerY, centerZ, scale);
+      return new THREE.Vector3(p.x, p.y, p.z);
     });
     const n = Math.min(branchCenters.length, 32);
     splatMaterial.uniforms.uNumBranches.value = n;
@@ -2555,20 +2604,26 @@ function animate() {
     const introT = clamp((performance.now() - introStartTime) / INTRO_CAMERA.duration, 0, 1);
     const introEase = 1 - Math.pow(1 - introT, 3);
     orbit.theta = lerp(INTRO_CAMERA.startTheta, INTRO_CAMERA.endTheta, introEase);
+    modelYaw = -orbit.theta;
     orbit.phi = INTRO_CAMERA.startPhi;
     orbit.radius = lerp(INTRO_CAMERA.startRadius, INTRO_CAMERA.endRadius, introEase);
+    applyModelTransform();
     if (introT >= 1) {
       introActive = false;
       lastInteractionTime = performance.now();
     }
   } else if (!interacting) {
     if (Math.abs(thetaVelocity) > 0.00001 || Math.abs(phiVelocity) > 0.00001) {
-      orbit.theta += thetaVelocity;
+      modelYaw += thetaVelocity;
+      orbit.theta = -modelYaw;
       orbit.phi = clamp(orbit.phi + phiVelocity, 0.24, Math.PI - 0.24);
       thetaVelocity *= 0.92;
       phiVelocity *= 0.86;
+      applyModelTransform();
     } else if (idleMs > 3200) {
-      orbit.theta += dt * 0.065;
+      modelYaw += dt * 0.065;
+      orbit.theta = -modelYaw;
+      applyModelTransform();
     }
   }
 
